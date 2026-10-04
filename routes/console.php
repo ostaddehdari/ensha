@@ -109,3 +109,34 @@ Artisan::command('ensha:verify-stage01', function () {
     $this->info('VERIFY_STAGE01_OK');
     return 0;
 })->purpose('Verify Ensha Stage 01 / v0.11.0 after deployment');
+
+Artisan::command('ensha:verify-stage02', function () {
+    $errors = [];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.12.0') {
+        $errors[] = 'VERSION باید 0.12.0 باشد.';
+    }
+    foreach (['clients', 'external_identities'] as $table) {
+        if (! Schema::hasTable($table)) {
+            $errors[] = "جدول {$table} وجود ندارد.";
+        }
+    }
+    foreach (['clients' => ['user_id', 'centre_id', 'client_code', 'status'], 'external_identities' => ['client_id', 'provider', 'external_id']] as $table => $columns) {
+        foreach ($columns as $column) {
+            if (! Schema::hasColumn($table, $column)) {
+                $errors[] = "ستون {$table}.{$column} وجود ندارد.";
+            }
+        }
+    }
+    $requiredPermissions = ['clients.view', 'clients.manage'];
+    if (Schema::hasTable('permissions') && DB::table('permissions')->where('is_active', true)->whereIn('slug', $requiredPermissions)->count() !== count($requiredPermissions)) {
+        $errors[] = 'مجوزهای Stage 02 / Work 01 کامل نیستند.';
+    }
+    if ($errors !== []) {
+        foreach ($errors as $error) {
+            $this->error($error);
+        }
+        return 1;
+    }
+    $this->info('VERIFY_STAGE02_OK');
+    return 0;
+})->purpose('Verify Ensha Stage 02 / Work 01 after deployment');

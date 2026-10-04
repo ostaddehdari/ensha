@@ -28,6 +28,7 @@
             'profile-fields' => request()->routeIs('profile-fields.*'),
             'centres' => request()->routeIs('centres.*'),
             'staff' => request()->routeIs('staff.*'),
+            'clients' => request()->routeIs('clients.*'),
             'branches' => request()->routeIs('centres.branches.*'),
             'centre-settings' => request()->routeIs('centres.settings.*'),
             'centre-operations' => request()->routeIs('centres.operations'),
@@ -70,6 +71,7 @@
                         elseif (($item['slug'] ?? '') === 'leaves') $href = route('module.leaves');
                         elseif (($item['slug'] ?? '') === 'rooms') $href = route('module.rooms');
                         elseif (($item['slug'] ?? '') === 'staff') $href = route('staff.index');
+                        elseif (($item['slug'] ?? '') === 'clients') $href = route('clients.index');
                         elseif (($item['slug'] ?? '') === 'branches') $href = auth()->user()->centre_id ? route('centres.branches.index', auth()->user()->centre_id) : route('centres.index');
                         elseif (($item['slug'] ?? '') === 'centre-settings') $href = auth()->user()->centre_id ? route('centres.settings.edit', auth()->user()->centre_id) : route('centres.index');
                         elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);

@@ -7,6 +7,7 @@ use App\Http\Controllers\CentreOperationsController;
 use App\Http\Controllers\CentreBranchController;
 use App\Http\Controllers\CentreController;
 use App\Http\Controllers\CentreSettingsController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImpersonationController;
@@ -62,6 +63,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
         Route::get('/staff/{user}/edit', [StaffController::class, 'edit'])->name('staff.edit');
         Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
+
+        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+        Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+        Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');

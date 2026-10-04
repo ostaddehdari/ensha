@@ -24,6 +24,11 @@ class Centre extends Model
         return $this->hasMany(CentreBranch::class);
     }
 
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
     public function roleAssignments(): HasMany
     {
         return $this->hasMany(UserRoleCentre::class);
