@@ -13,10 +13,9 @@
 database/database.sqlite
 .env.*
 !.env.example
-/run.sh
-/runlog.txt
 /bootstrap/cache/*
 !/bootstrap/cache/.gitignore
 /public/storage
+/run.sh
+/runlog.txt
 *.bak.*
-/database/database.sqlite

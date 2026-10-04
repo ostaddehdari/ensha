@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Centre;
+use App\Models\CentreBranch;
 use App\Models\Role;
 use App\Models\User;
 use App\Rules\IranianMobile;
@@ -97,7 +98,11 @@ class AuthController extends Controller
             'must_change_password' => false,
         ]);
 
-        $user->roleAssignments()->create(['role_id'=>$clientRole->id,'centre_id'=>$defaultCentre?->id]);
+        $user->roleAssignments()->create([
+            'role_id'=>$clientRole->id,
+            'centre_id'=>$defaultCentre?->id,
+            'branch_id'=>$defaultCentre ? CentreBranch::where('centre_id',$defaultCentre->id)->where('is_default',true)->value('id') : null,
+        ]);
         Auth::login($user);
         $request->session()->regenerate();
         SessionRegistry::putRevision($request, $user);

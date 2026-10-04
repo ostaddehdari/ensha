@@ -3,7 +3,7 @@
     $menus = config('panels.menus');
     $permissionBySlug = collect(config('panels.permission_menus', []))->pluck('permission', 'slug');
     $items = collect(array_merge($menus['common'] ?? [], $menus[$role] ?? []))
-        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['profile', 'counselors', 'work-hours', 'fees', 'appointments'], true))
+        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['profile', 'staff', 'work-hours', 'fees', 'appointments'], true))
         ->filter(function ($item) use ($permissionBySlug) {
             $slug = $item['slug'] ?? null;
             return ! $slug || ! $permissionBySlug->has($slug) || auth()->user()->hasPermission($permissionBySlug->get($slug));
@@ -11,7 +11,7 @@
     $existingSlugs = collect($items)->pluck('slug')->filter();
     $permissionItems = collect(config('panels.permission_menus', []))
         ->filter(fn ($item) => auth()->user()->hasPermission($item['permission']))
-        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['counselors', 'work-hours', 'fees', 'appointments'], true))
+        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['staff', 'work-hours', 'fees', 'appointments'], true))
         ->reject(fn ($item) => $existingSlugs->contains($item['slug']))
         ->values()->all();
     if ($permissionItems) {
@@ -27,7 +27,9 @@
             'permissions' => request()->routeIs('permissions.*'),
             'profile-fields' => request()->routeIs('profile-fields.*'),
             'centres' => request()->routeIs('centres.*'),
-            'counselors' => request()->routeIs('staff.*'),
+            'staff' => request()->routeIs('staff.*'),
+            'branches' => request()->routeIs('centres.branches.*'),
+            'centre-settings' => request()->routeIs('centres.settings.*'),
             'centre-operations' => request()->routeIs('centres.operations'),
             'work-hours' => request()->routeIs('module.work-hours') || request()->routeIs('centres.work-hours'),
             'holidays' => request()->routeIs('module.holidays') || request()->routeIs('centres.holidays'),
@@ -67,7 +69,9 @@
                         elseif (($item['slug'] ?? '') === 'holidays') $href = route('module.holidays');
                         elseif (($item['slug'] ?? '') === 'leaves') $href = route('module.leaves');
                         elseif (($item['slug'] ?? '') === 'rooms') $href = route('module.rooms');
-                        elseif (($item['slug'] ?? '') === 'counselors') $href = route('staff.index');
+                        elseif (($item['slug'] ?? '') === 'staff') $href = route('staff.index');
+                        elseif (($item['slug'] ?? '') === 'branches') $href = auth()->user()->centre_id ? route('centres.branches.index', auth()->user()->centre_id) : route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'centre-settings') $href = auth()->user()->centre_id ? route('centres.settings.edit', auth()->user()->centre_id) : route('centres.index');
                         elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);
                         $isActive = $activeFor($item['slug'] ?? '');
                     @endphp

@@ -21,8 +21,8 @@ class ImpersonationController extends Controller
 
         $actor = $request->user();
         $assignmentId=$request->input('assignment_id');
-        $assignment=$assignmentId ? $user->roleAssignments()->with('role')->findOrFail($assignmentId) : null;
-        if ($assignment) abort_unless($assignment->role?->is_active && $assignment->role->slug==='manager' && $assignment->centre_id,403);
+        $assignment=$assignmentId ? $user->roleAssignments()->with(['role','centre','branch'])->findOrFail($assignmentId) : null;
+        if ($assignment) abort_unless($assignment->role?->is_active && $assignment->role->slug==='manager' && $assignment->centre?->is_active && (!$assignment->branch_id || $assignment->branch?->is_active),403);
         Audit::record(
             'شروع ورود موقت به حساب کاربر',
             $request,

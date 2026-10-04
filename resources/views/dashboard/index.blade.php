@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="ensha-welcome-row">
-    <div><span class="ensha-eyebrow">{{ now()->format('Y/m/d') }} · نسخه پایه</span><h2>سلام {{ $user->first_name }}، آماده‌ایم.</h2><p>این نمای کلی عملیات مرتبط با نقش «{{ $user->role_label }}» را نشان می‌دهد.</p></div>
+    <div><span class="ensha-eyebrow">{{ now()->format('Y/m/d') }} · Stage 01</span><h2>سلام {{ $user->first_name }}، آماده‌ایم.</h2><p>این نمای کلی عملیات مرتبط با نقش «{{ $user->role_label }}»@if($centreContext) در {{ $centreContext->name }}@endif است.</p></div>
     <div class="ensha-quick-actions"><button class="ensha-secondary-btn" data-kt-drawer-toggle="#notifications_drawer" type="button"><i class="ki-filled ki-notification-on"></i> اعلان‌ها <span class="ensha-mini-count">۳</span></button><a href="{{ route('profile.show') }}" class="ensha-primary-btn"><i class="ki-filled ki-profile-circle"></i> پروفایل من</a></div>
 </div>
 
@@ -23,7 +23,9 @@
                 @php
                     $quickHref = match($item['slug'] ?? '') {
                         'users' => route('users.index'),
-                        'counselors' => route('staff.index'),
+                        'staff' => route('staff.index'),
+                        'branches' => $user->centre_id ? route('centres.branches.index', $user->centre_id) : route('centres.index'),
+                        'centre-settings' => $user->centre_id ? route('centres.settings.edit', $user->centre_id) : route('centres.index'),
                         'profile' => route('profile.show'),
                         'centres' => route('centres.index'),
                         'roles' => route('roles.index'),
@@ -39,8 +41,8 @@
 
     <section class="ensha-card">
         <div class="ensha-card-head"><div><span class="ensha-eyebrow">آماده توسعه</span><h3>وضعیت زیرساخت</h3></div><i class="ki-filled ki-setting-2 ensha-muted-icon"></i></div>
-        <div class="ensha-health-list"><div><span class="health-dot green"></span><span>هویت و ورود نقش‌محور</span><strong>فعال</strong></div><div><span class="health-dot green"></span><span>دیتابیس مستقل مرکز</span><strong>فعال</strong></div><div><span class="health-dot amber"></span><span>چت و اعلان بلادرنگ</span><strong>نمایشی</strong></div><div><span class="health-dot amber"></span><span>نوبت‌دهی و تقویم</span><strong>مرحله بعد</strong></div></div>
-        <div class="ensha-progress"><div><span>آمادگی نسخه پایه</span><strong>۶۵٪</strong></div><div class="progress-track"><span style="width:65%"></span></div></div>
+        <div class="ensha-health-list"><div><span class="health-dot green"></span><span>هویت و ورود چندنقشی</span><strong>فعال</strong></div><div><span class="health-dot green"></span><span>مرکز، شعب و منطقه زمانی</span><strong>فعال</strong></div><div><span class="health-dot green"></span><span>پرونده همکاری کارکنان</span><strong>فعال</strong></div><div><span class="health-dot amber"></span><span>پرونده مراجع و نوبت‌دهی</span><strong>Stage بعد</strong></div></div>
+        <div class="ensha-progress"><div><span>تکمیل Stage 01</span><strong>۹۵٪</strong></div><div class="progress-track"><span style="width:95%"></span></div></div>
     </section>
 </div>
 

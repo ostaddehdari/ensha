@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\Centre;
+use App\Models\CentreBranch;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Audit;
@@ -136,7 +137,11 @@ class UserController extends Controller
             'must_change_password' => true,
             'created_by' => $actor->id,
         ]);
-            $created->roleAssignments()->create(['role_id'=>$role->id,'centre_id'=>$centreId]);
+            $created->roleAssignments()->create([
+                'role_id'=>$role->id,
+                'centre_id'=>$centreId,
+                'branch_id'=>$centreId ? CentreBranch::where('centre_id',$centreId)->where('is_default',true)->value('id') : null,
+            ]);
             ProfileForm::save($created, $role, $profileValues);
             return $created;
         });
@@ -205,7 +210,10 @@ class UserController extends Controller
                 'centre_id' => $centreId,
             ])->save();
             if ($accessChanged) {
-                $user->roleAssignments()->firstOrCreate(['role_id'=>$role->id,'centre_id'=>$centreId]);
+                $user->roleAssignments()->firstOrCreate(
+                    ['role_id'=>$role->id,'centre_id'=>$centreId],
+                    ['branch_id'=>$centreId ? CentreBranch::where('centre_id',$centreId)->where('is_default',true)->value('id') : null],
+                );
             }
             ProfileForm::save($user, $role, $profileValues);
 

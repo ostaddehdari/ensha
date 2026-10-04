@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Centre;
+use App\Models\CentreBranch;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\Audit;
@@ -68,7 +69,10 @@ class CentreOperationsController extends Controller
         }
 
         $role = Role::where('slug', 'counselor')->where('is_active', true)->firstOrFail();
-        $user->roleAssignments()->firstOrCreate(['role_id' => $role->id, 'centre_id' => $centre->id]);
+        $user->roleAssignments()->firstOrCreate(
+            ['role_id' => $role->id, 'centre_id' => $centre->id],
+            ['branch_id' => CentreBranch::where('centre_id',$centre->id)->where('is_default',true)->value('id')],
+        );
         SessionRegistry::invalidateAll($user, 'centre_assigned');
         Audit::record('عضویت مشاور در مرکز', $request, 'warning', ['user_id' => $user->id, 'centre_id' => $centre->id], $user);
 
