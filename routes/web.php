@@ -1,0 +1,113 @@
+<?php
+
+use App\Http\Controllers\ActiveRoleController;
+use App\Http\Controllers\AccountPasswordController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CentreOperationsController;
+use App\Http\Controllers\CentreController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImpersonationController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProfileFieldController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SelfProfileController;
+use App\Http\Controllers\UserAssignmentController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserSessionController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login.store');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:registration')->name('register.store');
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/account/password', [AccountPasswordController::class, 'edit'])->name('account.password.edit');
+    Route::put('/account/password', [AccountPasswordController::class, 'update'])->name('account.password.update');
+    Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
+
+    Route::middleware('password.changed')->group(function () {
+        Route::get('/', fn () => redirect()->route('dashboard'))->name('home');
+        Route::get('/account/roles', [ActiveRoleController::class, 'index'])->name('account.roles');
+        Route::post('/account/roles/{assignment}', [ActiveRoleController::class, 'select'])->name('account.roles.select');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/centres', [CentreController::class, 'index'])->name('centres.index');
+        Route::get('/centres/create', [CentreController::class, 'create'])->name('centres.create');
+        Route::post('/centres', [CentreController::class, 'store'])->name('centres.store');
+        Route::get('/centres/{centre}', [CentreController::class, 'show'])->name('centres.show');
+        Route::get('/centres/{centre}/edit', [CentreController::class, 'edit'])->name('centres.edit');
+        Route::put('/centres/{centre}', [CentreController::class, 'update'])->name('centres.update');
+        Route::get('/centres/{centre}/operations', [CentreOperationsController::class,'index'])->name('centres.operations');
+        Route::post('/centres/{centre}/counselors', [CentreOperationsController::class,'attachCounselor'])->name('centres.operations.counselor');
+        Route::post('/centres/{centre}/categories', [CentreOperationsController::class,'category'])->name('centres.operations.category');
+        Route::post('/centres/{centre}/topics', [CentreOperationsController::class,'topic'])->name('centres.operations.topic');
+        Route::put('/centres/{centre}/topics/{topic}', [CentreOperationsController::class,'updateTopic'])->name('centres.operations.topic.update');
+        Route::post('/centres/{centre}/topic-assignments', [CentreOperationsController::class,'assign'])->name('centres.operations.assign');
+        Route::post('/centres/{centre}/shifts', [CentreOperationsController::class,'shift'])->name('centres.operations.shift');
+        Route::delete('/centres/{centre}/shifts/{shift}', [CentreOperationsController::class,'removeShift'])->name('centres.operations.shift.delete');
+        Route::post('/centres/{centre}/closures', [CentreOperationsController::class,'closure'])->name('centres.operations.closure');
+        Route::post('/centres/{centre}/leaves', [CentreOperationsController::class,'leave'])->name('centres.operations.leave');
+        Route::post('/centres/{centre}/rooms', [CentreOperationsController::class,'room'])->name('centres.operations.room');
+        Route::put('/centres/{centre}/rooms/{room}', [CentreOperationsController::class,'updateRoom'])->name('centres.operations.room.update');
+        Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+        Route::get('/staff/{user}/edit', [StaffController::class, 'edit'])->name('staff.edit');
+        Route::put('/staff/{user}', [StaffController::class, 'update'])->name('staff.update');
+
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');
+        Route::get('/users/deleted', [UserController::class, 'trash'])->name('users.trash');
+        Route::patch('/users/deleted/{user}/restore', [UserController::class, 'restore'])->middleware('throttle:sensitive')->name('users.restore');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/roles', [UserAssignmentController::class, 'edit'])->name('users.assignments.edit');
+        Route::post('/users/{user}/roles', [UserAssignmentController::class, 'store'])->name('users.assignments.store');
+        Route::delete('/users/{user}/roles/{assignment}', [UserAssignmentController::class, 'destroy'])->name('users.assignments.destroy');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::patch('/users/{user}/status', [UserController::class, 'changeStatus'])->middleware('throttle:sensitive')->name('users.status');
+        Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->middleware('throttle:sensitive')->name('users.password');
+        Route::patch('/users/{user}/sessions/revoke', [UserSessionController::class, 'revokeAll'])->middleware('throttle:sensitive')->name('users.sessions.revoke-all');
+        Route::patch('/users/{user}/sessions/{userSession}/revoke', [UserSessionController::class, 'revoke'])->middleware('throttle:sensitive')->name('users.sessions.revoke');
+        Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'start'])->middleware('throttle:sensitive')->name('users.impersonate');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+        Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+
+        Route::middleware('permission:profile_fields.manage')->group(function () {
+            Route::get('/profile-fields', [ProfileFieldController::class, 'index'])->name('profile-fields.index');
+            Route::post('/profile-fields', [ProfileFieldController::class, 'store'])->name('profile-fields.store');
+            Route::put('/profile-fields/save', [ProfileFieldController::class, 'saveDraft'])->name('profile-fields.save');
+            Route::put('/profile-fields/save-all', [ProfileFieldController::class, 'saveAll'])->name('profile-fields.save-all');
+            Route::put('/profile-fields/order', [ProfileFieldController::class, 'reorder'])->name('profile-fields.reorder');
+            Route::put('/profile-fields/{profileField}', [ProfileFieldController::class, 'update'])->name('profile-fields.update');
+            Route::post('/profile-fields/{profileField}/clone', [ProfileFieldController::class, 'cloneField'])->name('profile-fields.clone');
+            Route::delete('/profile-fields/{profileField}', [ProfileFieldController::class, 'destroy'])->name('profile-fields.destroy');
+        });
+
+        Route::get('/module/profile', [SelfProfileController::class, 'show'])->name('profile.show');
+        Route::put('/module/profile', [SelfProfileController::class, 'update'])->middleware('throttle:sensitive')->name('profile.update');
+
+        Route::get('/centres/{centre}/topics', [CentreOperationsController::class,'topicsPage'])->name('centres.topics');
+        Route::get('/centres/{centre}/work-hours', [CentreOperationsController::class,'workHours'])->name('centres.work-hours');
+        Route::get('/centres/{centre}/holidays', [CentreOperationsController::class,'holidays'])->name('centres.holidays');
+        Route::get('/centres/{centre}/leaves', [CentreOperationsController::class,'leavesPage'])->name('centres.leaves');
+        Route::get('/centres/{centre}/rooms', [CentreOperationsController::class,'roomsPage'])->name('centres.rooms');
+        Route::get('/module/work-hours', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.work-hours', $request->user()->centre_id))->name('module.work-hours');
+        Route::get('/module/fees', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.topics', $request->user()->centre_id))->name('module.fees');
+        Route::get('/module/appointments', fn(\Illuminate\Http\Request $request) => redirect()->route('module', ['module'=>'appointments']))->name('module.appointments');
+        Route::get('/module/holidays', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.holidays', $request->user()->centre_id))->name('module.holidays');
+        Route::get('/module/leaves', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.leaves', $request->user()->centre_id))->name('module.leaves');
+        Route::get('/module/rooms', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.rooms', $request->user()->centre_id))->name('module.rooms');
+        Route::get('/module/{module}', [DashboardController::class, 'module'])->name('module');
+    });
+});

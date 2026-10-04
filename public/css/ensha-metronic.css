@@ -1,0 +1,129 @@
+/* Ensha layer: keeps Metronic's original kt-* structure and only adds RTL/Persian brand details. */
+.ensha-metronic-body { font-family: Vazirmatn, Inter, Tahoma, sans-serif; direction: rtl; }
+.ensha-metronic-body .kt-sidebar { direction: rtl; background: #ffffff !important; }
+.ensha-metronic-body .kt-sidebar-content { background: #ffffff; }
+.ensha-metronic-body .kt-menu-link, .ensha-metronic-body .kt-menu-heading { direction: rtl; }
+.ensha-metronic-body .kt-sidebar .kt-menu-link { min-height: 38px; }
+.ensha-metronic-body .kt-sidebar .kt-menu-title { white-space: nowrap; }
+.ensha-metronic-body .kt-menu-item.active > .kt-menu-link { color: var(--tw-primary, #2563eb); }
+.ensha-kt-brand { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+.ensha-kt-brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 37px; height: 37px; flex: 0 0 auto; color: #fff; background: linear-gradient(135deg, #4d7cfe, #8b5cf6); border-radius: 11px; box-shadow: 0 8px 18px rgba(77, 124, 254, .23); font-size: 21px; font-weight: 800; }
+.ensha-kt-brand-mark.small { width: 28px; height: 28px; border-radius: 8px; font-size: 16px; }
+.ensha-kt-brand-copy { min-width: 0; }
+.ensha-kt-brand-copy strong { display: block; color: #17233a; font-size: 17px; font-weight: 800; line-height: 1.15; }
+.ensha-kt-brand-copy small { display: block; margin-top: 2px; color: #8b97ab; font-size: 9px; }
+.ensha-mobile-brand { display: inline-flex; align-items: center; gap: 7px; color: #17233a; font-size: 14px; font-weight: 800; }
+.ensha-header-page-icon { display: grid; place-items: center; width: 34px; height: 34px; color: #4c75e8; background: #edf2ff; border-radius: 10px; font-size: 17px; }
+.ensha-header-kicker { display: block; color: #95a0b3; font-size: 9px; font-weight: 600; }
+.ensha-header-title { display: block; margin-top: 3px; color: #1f2d48; font-size: 15px; font-weight: 800; }
+.ensha-kt-avatar { display: inline-flex; align-items: center; justify-content: center; width: 31px; height: 31px; color: #fff; background: linear-gradient(135deg, #4d7cfe, #8b5cf6); border-radius: 9px; font-size: 13px; font-weight: 800; }
+.ensha-kt-indicator { position: absolute; top: -1px; left: -1px; display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; padding: 0 3px; color: #fff; background: #ef6c82; border: 2px solid var(--tw-bg-background, #fff); border-radius: 999px; font-size: 8px; font-weight: 700; line-height: 1; }
+.ensha-notification-unread { width: 6px; height: 6px; flex: 0 0 auto; margin-top: 5px; background: #3b82f6; border-radius: 999px; }
+.ensha-notification-read { opacity: .52; }
+.ensha-notification-read .ensha-notification-unread { visibility: hidden; }
+.ensha-chat-avatar { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; color: #fff; background: linear-gradient(135deg, #4d7cfe, #8b5cf6); border-radius: 13px; font-size: 20px; font-weight: 800; }
+.ensha-chat-avatar.mini { width: 27px; height: 27px; border-radius: 8px; font-size: 13px; }
+.ensha-chat-bubble { max-width: 78%; padding: 10px 12px; border-radius: 12px; color: #3f4e69; font-size: 11px; line-height: 1.8; }
+.ensha-chat-bubble small { display: block; margin-top: 3px; color: #9aa6b8; font-size: 8px; }
+.ensha-chat-bubble.incoming { background: #f0f3fb; border-bottom-right-radius: 3px; }
+.ensha-chat-bubble.outgoing { color: #fff; background: #4874ed; border-bottom-left-radius: 3px; }
+.ensha-chat-bubble.outgoing small { color: #d8e2ff; }
+.ensha-metronic-toast { position: fixed; z-index: 100; right: 24px; bottom: 24px; max-width: calc(100vw - 48px); padding: 11px 14px; color: #fff; background: #17233a; border-radius: 9px; box-shadow: 0 12px 30px rgba(23,35,58,.2); font-size: 11px; }
+.ensha-metronic-toast[hidden] { display: none; }
+.ensha-metronic-body .kt-modal-content { direction: rtl; }
+.ensha-metronic-body .kt-input-group { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid var(--tw-border-border, #e2e8f0); border-radius: 8px; }
+.ensha-metronic-body .kt-input-group .kt-input { border: 0; box-shadow: none; }
+@media (max-width: 1024px) {
+    .ensha-metronic-body .kt-sidebar { box-shadow: 0 0 35px rgba(23,35,58,.13); }
+    .ensha-metronic-body .kt-sidebar .kt-sidebar-header { display: flex; }
+}
+@media (max-width: 640px) {
+    .ensha-metronic-body .kt-drawer { width: min(450px, calc(100vw - 24px)); inset-inline-end: 12px; }
+    .ensha-metronic-toast { right: 12px; bottom: 12px; max-width: calc(100vw - 24px); }
+}
+
+/* Access-control module */
+.ensha-page-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:24px; }
+.ensha-page-heading h2 { margin:6px 0; color:#17233a; font-size:24px; font-weight:800; letter-spacing:-.6px; }
+.ensha-page-heading p { margin:0; color:#8290a8; font-size:11px; line-height:1.9; }
+.ensha-heading-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.ensha-back-crumb { display:inline-flex; align-items:center; gap:5px; margin-bottom:3px; color:#71819e; font-size:10px; font-weight:700; }
+.ensha-back-crumb:hover { color:#4d73e6; }
+.ensha-danger-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:39px; padding:9px 14px; color:#d05267; background:#fff2f4; border:1px solid #f4d8dd; border-radius:10px; font-size:10px; font-weight:700; transition:.18s ease; }
+.ensha-danger-btn:hover { color:#fff; background:#dc6275; border-color:#dc6275; }
+.ensha-danger-btn.full { width:100%; }
+.ensha-alert.warning { color:#9b6a0d; background:#fff8e8; border:1px solid #f3e4bd; }
+.ensha-status.danger { color:#ca5266; background:#fff0f3; }
+.ensha-status .status-dot { display:inline-block; width:5px; height:5px; margin-inline-end:5px; border-radius:50%; background:currentColor; vertical-align:middle; }
+.ensha-ltr-value { display:block; direction:ltr; text-align:right; color:#4e5d79; font-weight:600; }
+
+.ensha-compact-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.ensha-compact-metric { display:flex; align-items:center; gap:11px; min-height:78px; padding:14px 16px; background:#fff; border:1px solid #e8edf5; border-radius:14px; box-shadow:0 9px 28px rgba(28,45,82,.045); }
+.ensha-compact-metric .icon { display:grid; place-items:center; width:38px; height:38px; flex:0 0 auto; border-radius:11px; font-size:17px; }
+.ensha-compact-metric .icon.blue { color:#5275eb; background:#edf2ff; }.ensha-compact-metric .icon.green { color:#109c76; background:#e9f8f2; }.ensha-compact-metric .icon.amber { color:#bd8117; background:#fff5df; }.ensha-compact-metric .icon.rose { color:#d75f73; background:#fff0f3; }.ensha-compact-metric .icon.violet { color:#7d61ce; background:#f1edff; }
+.ensha-compact-metrics.five { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.ensha-compact-metric small { display:block; color:#8d99ae; font-size:9px; }.ensha-compact-metric strong { display:block; margin-top:4px; color:#273651; font-size:18px; }
+
+.ensha-filter-bar { display:grid; grid-template-columns:minmax(210px,1.5fr) repeat(3,minmax(120px,.65fr)) auto auto; align-items:center; gap:8px; margin-bottom:18px; padding-bottom:18px; border-bottom:1px solid #edf0f5; }
+.ensha-filter-bar select,.ensha-filter-bar input { width:100%; min-height:39px; padding:8px 10px; color:#53627d; background:#fbfcfe; border:1px solid #e2e7ef; border-radius:9px; outline:0; font-size:10px; }
+.ensha-filter-bar select:focus,.ensha-filter-bar input:focus { border-color:#8ba5fb; background:#fff; box-shadow:0 0 0 3px rgba(98,130,236,.1); }
+.ensha-search-field { position:relative; display:block; }.ensha-search-field i { position:absolute; z-index:1; top:12px; right:11px; color:#9ba7ba; }.ensha-search-field input { padding-right:33px; }
+.ensha-clear-filter { color:#7b8aa5; font-size:9px; white-space:nowrap; }.ensha-clear-filter:hover { color:#d05a6d; }
+.ensha-data-table td { vertical-align:middle; }.ensha-data-table tbody tr { transition:.15s ease; }.ensha-data-table tbody tr:hover { background:#fbfcff; }
+.ensha-row-actions { display:flex; align-items:center; justify-content:center; gap:4px; }
+.ensha-row-actions a,.ensha-row-actions button { display:grid; place-items:center; width:29px; height:29px; padding:0; color:#72819c; background:#f6f8fb; border:1px solid #e9edf4; border-radius:8px; font-size:13px; transition:.15s ease; }
+.ensha-row-actions a:hover,.ensha-row-actions button:hover { color:#fff; background:#5778e6; border-color:#5778e6; }.ensha-row-actions button.danger:hover { background:#dc6275; border-color:#dc6275; }.ensha-row-actions button.success:hover { background:#16a47c; border-color:#16a47c; }
+
+.ensha-record-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:18px; align-items:start; }
+.ensha-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 13px; }
+.ensha-form-grid > label,.ensha-inline-security-form label { display:flex; flex-direction:column; gap:6px; color:#64718b; font-size:10px; font-weight:700; }
+.ensha-form-grid input,.ensha-form-grid select,.ensha-form-grid textarea,.ensha-inline-security-form input { width:100%; min-height:42px; padding:10px 11px; color:#34435f; background:#fbfcfe; border:1px solid #e0e6ef; border-radius:9px; outline:0; font-size:11px; transition:.18s ease; }
+.ensha-form-grid textarea { resize:vertical; }.ensha-form-grid input:focus,.ensha-form-grid select:focus,.ensha-form-grid textarea:focus,.ensha-inline-security-form input:focus { border-color:#88a1f3; background:#fff; box-shadow:0 0 0 3px rgba(87,120,230,.1); }
+.ensha-form-grid .full-span { grid-column:1/-1; }.required { color:#d95c70; }
+.ensha-input-action { position:relative; display:block; }.ensha-input-action input { padding-left:98px; }.ensha-input-action button { position:absolute; top:6px; left:6px; min-height:30px; padding:5px 8px; color:#4d6dd0; background:#edf2ff; border:0; border-radius:7px; font-size:8px; font-weight:700; }
+.ensha-switch-row { flex-direction:row!important; align-items:center; justify-content:space-between; gap:18px!important; padding:12px 13px; background:#f8faff; border:1px solid #e8edf7; border-radius:10px; }
+.ensha-switch-row span strong { display:block; color:#52617c; font-size:10px; }.ensha-switch-row span small { display:block; margin-top:4px; color:#96a2b6; font-size:8px; font-weight:500; }.ensha-switch-row input[type=checkbox] { width:34px!important; height:18px; accent-color:#4f72df; }
+.ensha-side-help h3,.ensha-role-aside h3 { margin:15px 0 7px; color:#2d3b57; font-size:14px; }.ensha-side-help p,.ensha-role-aside p { margin:0 0 14px; color:#8390a5; font-size:10px; line-height:1.9; }.ensha-side-help ul { margin:0 0 20px; padding:0 17px 0 0; color:#6f7d96; font-size:9px; line-height:2.2; }.ensha-side-help .full,.ensha-role-aside .full { margin-top:8px; }
+.ensha-help-icon { display:grid; place-items:center; width:43px; height:43px; color:#5374df; background:#edf2ff; border-radius:12px; font-size:20px; }
+
+.ensha-profile-grid { display:grid; grid-template-columns:300px minmax(0,1fr); gap:18px; align-items:start; }
+.ensha-user-summary { text-align:center; }.ensha-profile-avatar { display:grid; place-items:center; width:78px; height:78px; margin:0 auto 13px; color:#fff; background:linear-gradient(145deg,#5a7ced,#8267db); border:6px solid #eff3ff; border-radius:25px; font-size:30px; font-weight:800; box-shadow:0 10px 25px rgba(83,111,213,.18); }
+.ensha-user-summary h3 { margin:0 0 9px; color:#283751; font-size:17px; }.ensha-user-summary > .ensha-status { display:block; width:max-content; margin:11px auto 0; }
+.ensha-summary-list { margin-top:20px; text-align:right; border-top:1px solid #edf0f5; }.ensha-summary-list > div { display:grid; grid-template-columns:20px 1fr; gap:2px 8px; padding:11px 2px; border-bottom:1px solid #edf0f5; }.ensha-summary-list i { grid-row:1/3; color:#8294c7; font-size:14px; }.ensha-summary-list span { color:#929db0; font-size:8px; }.ensha-summary-list strong { color:#53617a; font-size:10px; font-weight:700; }
+.ensha-profile-main { display:flex; flex-direction:column; gap:18px; }.ensha-info-strip { display:flex; align-items:flex-start; gap:11px; padding:13px; color:#4b63b7; background:#f2f5ff; border:1px solid #e2e9ff; border-radius:11px; }.ensha-info-strip > i { font-size:20px; }.ensha-info-strip strong { display:block; font-size:11px; }.ensha-info-strip p { margin:4px 0 0; color:#7e8cad; font-size:9px; line-height:1.8; }
+.ensha-permission-chips { display:flex; flex-wrap:wrap; gap:7px; }.ensha-permission-chips span { display:inline-flex; align-items:center; gap:5px; padding:7px 9px; color:#596987; background:#f7f9fc; border:1px solid #e9edf4; border-radius:8px; font-size:9px; }.ensha-permission-chips i { color:#16a47c; }.ensha-permission-chips .empty { color:#929eb1; }
+.ensha-collapsible { padding:0; overflow:hidden; }.ensha-collapsible summary { display:flex; align-items:center; justify-content:space-between; padding:18px 21px; cursor:pointer; list-style:none; }.ensha-collapsible summary::-webkit-details-marker { display:none; }.ensha-collapsible summary > span { display:flex; align-items:center; gap:10px; }.ensha-collapsible summary > span > i { color:#5575df; font-size:20px; }.ensha-collapsible summary strong,.ensha-collapsible summary small { display:block; }.ensha-collapsible summary strong { color:#3e4d69; font-size:11px; }.ensha-collapsible summary small { margin-top:3px; color:#97a2b4; font-size:8px; }.ensha-collapsible[open] summary { border-bottom:1px solid #edf0f5; }.ensha-inline-security-form { display:grid; grid-template-columns:1fr 1fr auto; align-items:end; gap:10px; padding:18px 21px; }
+.ensha-audit-list { border-top:1px solid #edf0f5; }.ensha-audit-item { display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:9px; padding:12px 1px; border-bottom:1px solid #edf0f5; }.ensha-audit-icon { display:grid; place-items:center; width:30px; height:30px; color:#4f75df; background:#edf2ff; border-radius:8px; }.ensha-audit-icon.warning { color:#c78615; background:#fff5df; }.ensha-audit-icon.info { color:#4f75df; background:#edf2ff; }.ensha-audit-item strong { display:block; color:#4a5872; font-size:10px; }.ensha-audit-item small { display:block; margin-top:4px; color:#9ba6b7; font-size:8px; }.ensha-audit-item code { color:#7181a0; font-size:8px; direction:ltr; }
+.ensha-empty-state.compact { min-height:100px; }.ensha-danger-zone { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:16px 18px; background:#fff8f9; border:1px solid #f3dfe3; border-radius:14px; }.ensha-danger-zone strong { color:#b64f61; font-size:11px; }.ensha-danger-zone p { margin:4px 0 0; color:#9b7c82; font-size:8px; }.ensha-danger-zone.vertical { display:block; margin-top:14px; }.ensha-danger-zone.vertical .full { margin-top:12px; }
+
+.ensha-access-overview { display:grid; grid-template-columns:190px 190px 1fr; align-items:center; gap:11px; margin-bottom:18px; }.ensha-access-overview > div { display:flex; align-items:center; gap:10px; min-height:70px; padding:13px; background:#fff; border:1px solid #e8edf5; border-radius:13px; }.ensha-access-overview .icon { display:grid; place-items:center; width:37px; height:37px; color:#5274de; background:#edf2ff; border-radius:10px; font-size:18px; }.ensha-access-overview strong { display:block; color:#293853; font-size:17px; }.ensha-access-overview small { color:#8f9bad; font-size:8px; }.ensha-access-overview > p { display:flex; align-items:flex-start; gap:8px; margin:0; padding:13px; color:#77859e; background:#f8faff; border:1px solid #e8edf7; border-radius:12px; font-size:9px; line-height:1.9; }.ensha-access-overview > p i { color:#5675d9; font-size:16px; }
+.ensha-role-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }.ensha-role-card { padding:18px; background:#fff; border:1px solid #e7ecf4; border-radius:15px; box-shadow:0 10px 30px rgba(28,45,82,.045); }.ensha-role-card-head { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:10px; }.ensha-role-icon { display:grid; place-items:center; width:40px; height:40px; color:#526fda; background:#edf2ff; border-radius:11px; font-size:18px; }.ensha-role-icon.mini { width:31px; height:31px; border-radius:8px; font-size:14px; }.ensha-role-icon.tone-danger { color:#d35a6e; background:#fff0f3; }.ensha-role-icon.tone-success { color:#109c76; background:#e9f8f2; }.ensha-role-icon.tone-warning { color:#bc8118; background:#fff5df; }.ensha-role-icon.tone-info { color:#3488b7; background:#eaf7ff; }.ensha-role-icon.tone-violet { color:#7a5dc8; background:#f1edff; }
+.ensha-role-card h3 { margin:0 0 3px; color:#35435e; font-size:12px; }.ensha-role-card code { color:#8794aa; font-size:8px; direction:ltr; }.ensha-role-card > p { min-height:38px; margin:14px 0; color:#8491a6; font-size:9px; line-height:1.9; }.ensha-role-stats { display:flex; align-items:center; gap:7px; flex-wrap:wrap; padding:11px 0; border-top:1px solid #edf0f5; border-bottom:1px solid #edf0f5; }.ensha-role-stats span { padding:4px 7px; color:#72809a; background:#f6f8fb; border-radius:6px; font-size:8px; }.ensha-role-stats strong { color:#4f628d; }.ensha-role-card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:12px; color:#9aa5b6; font-size:8px; }.ensha-role-card-footer a { color:#5371d6; font-size:9px; font-weight:700; }
+.ensha-role-form-layout { display:grid; grid-template-columns:minmax(0,1fr) 290px; gap:18px; align-items:start; }.ensha-role-main { display:flex; flex-direction:column; gap:18px; }.ensha-matrix-actions { display:flex; gap:6px; }.ensha-matrix-actions button { padding:5px 7px; color:#6577b6; background:#f2f5ff; border:1px solid #e0e7fd; border-radius:6px; font-size:8px; }
+.ensha-permission-matrix { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }.ensha-permission-group { overflow:hidden; border:1px solid #e8edf4; border-radius:12px; }.ensha-permission-group-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 11px; background:#fafbfe; border-bottom:1px solid #e8edf4; }.ensha-permission-group-head > div { display:flex; align-items:center; gap:8px; }.ensha-permission-group-head strong { display:block; color:#4a5873; font-size:10px; }.ensha-permission-group-head small { display:block; margin-top:3px; color:#98a3b5; font-size:8px; }.ensha-permission-group-head > label { display:flex; align-items:center; gap:4px; color:#7a879d; font-size:8px; }.ensha-permission-group-head input,.ensha-permission-option > input { accent-color:#5274df; }
+.ensha-permission-list { padding:3px 11px; }.ensha-permission-option { display:grid; grid-template-columns:16px 1fr; gap:7px; padding:10px 0; border-bottom:1px solid #edf0f5; cursor:pointer; }.ensha-permission-option:last-child { border-bottom:0; }.ensha-permission-option > input { margin-top:2px; }.ensha-permission-option strong { display:block; color:#526079; font-size:9px; }.ensha-permission-option small { display:block; margin:3px 0; color:#99a4b6; font-size:8px; line-height:1.6; }.ensha-permission-option code { color:#7182bb; font-size:7px; direction:ltr; }.ensha-role-aside { min-width:0; }
+.ensha-catalog-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }.ensha-catalog-list > div { display:grid; grid-template-columns:32px 1fr; gap:9px; padding:12px 0; border-top:1px solid #edf0f5; }.ensha-catalog-list strong { display:block; color:#4a5872; font-size:10px; }.ensha-catalog-list p { margin:3px 0; color:#8e9aae; font-size:8px; line-height:1.7; }.ensha-catalog-list code { display:inline-block; margin-left:6px; color:#6477ba; font-size:7px; direction:ltr; }.ensha-catalog-list small { color:#9aa5b6; font-size:7px; }
+.ensha-password-page { max-width:520px; margin:4vh auto 0; }.ensha-security-hero { display:flex; align-items:flex-start; gap:13px; margin-bottom:22px; padding-bottom:19px; border-bottom:1px solid #edf0f5; }.ensha-security-hero > span { display:grid; place-items:center; width:46px; height:46px; flex:0 0 auto; color:#5374df; background:#edf2ff; border-radius:13px; font-size:22px; }.ensha-security-hero h2 { margin:5px 0; color:#283751; font-size:19px; }.ensha-security-hero p { margin:0; color:#8793a8; font-size:9px; line-height:1.8; }
+
+.ensha-status-reason { margin:10px 0 0; padding:8px 10px; color:#8a6670; background:#fff8f9; border:1px solid #f2e2e5; border-radius:8px; font-size:8px; line-height:1.8; }
+.ensha-status-form { display:flex; align-items:end; gap:10px; padding:18px 21px; }.ensha-status-form label { display:flex; flex-direction:column; gap:6px; color:#64718b; font-size:9px; font-weight:700; }.ensha-status-form .grow { flex:1; }.ensha-status-form input,.ensha-status-form select { min-width:170px; min-height:40px; padding:9px 10px; color:#40506c; background:#fbfcfe; border:1px solid #e1e6ef; border-radius:9px; outline:0; font-size:10px; }
+.ensha-session-list { border-top:1px solid #edf0f5; }.ensha-session-item { display:flex; align-items:center; gap:10px; min-height:62px; padding:10px 1px; border-bottom:1px solid #edf0f5; }.ensha-session-icon { display:grid; place-items:center; width:34px; height:34px; flex:0 0 auto; color:#5675da; background:#edf2ff; border-radius:9px; font-size:16px; }.ensha-session-item strong { display:block; color:#475570; font-size:10px; }.ensha-session-item small { display:block; margin-top:4px; color:#97a3b6; font-size:8px; }.ensha-current-session { display:inline-block; margin-inline-start:5px; padding:2px 5px; color:#168566; background:#eaf8f2; border-radius:5px; font-size:7px; }.ensha-icon-danger { display:grid; place-items:center; width:28px; height:28px; color:#d35b6f; background:#fff2f4; border:1px solid #f3dce0; border-radius:8px; }.ensha-icon-danger:hover { color:#fff; background:#d96074; }.ensha-avatar.muted { background:linear-gradient(145deg,#94a0b5,#7d899d); }
+.ensha-impersonation-banner { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; padding:11px 14px; color:#795613; background:#fff8e7; border:1px solid #eedda9; border-radius:11px; font-size:10px; line-height:1.8; box-shadow:0 8px 24px rgba(139,99,20,.07); }.ensha-impersonation-banner span { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }.ensha-impersonation-banner i { font-size:16px; }.ensha-impersonation-banner button { display:inline-flex; align-items:center; gap:6px; min-height:34px; padding:7px 10px; color:#fff; background:#a4741e; border:0; border-radius:8px; font-size:9px; font-weight:700; white-space:nowrap; }
+
+@media (max-width:1180px) {
+    .ensha-compact-metrics.five { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .ensha-filter-bar { grid-template-columns:repeat(3,minmax(0,1fr)); }.ensha-search-field { grid-column:span 2; }
+    .ensha-record-layout,.ensha-role-form-layout { grid-template-columns:1fr; }.ensha-role-aside .sticky-card { position:static; }
+    .ensha-role-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:800px) {
+    .ensha-compact-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.ensha-profile-grid { grid-template-columns:1fr; }.ensha-user-summary { position:static; }
+    .ensha-access-overview { grid-template-columns:1fr 1fr; }.ensha-access-overview > p { grid-column:1/-1; }.ensha-permission-matrix,.ensha-catalog-grid { grid-template-columns:1fr; }
+}
+@media (max-width:640px) {
+    .ensha-page-heading { align-items:flex-start; flex-direction:column; }.ensha-heading-actions { width:100%; }.ensha-heading-actions > * { flex:1; }
+    .ensha-filter-bar { grid-template-columns:1fr 1fr; }.ensha-search-field { grid-column:1/-1; }.ensha-filter-bar .ensha-secondary-btn { width:100%; }.ensha-clear-filter { text-align:center; }
+    .ensha-form-grid { grid-template-columns:1fr; }.ensha-form-grid .full-span { grid-column:auto; }.ensha-inline-security-form { grid-template-columns:1fr; }
+    .ensha-role-grid { grid-template-columns:1fr; }.ensha-access-overview { grid-template-columns:1fr; }.ensha-access-overview > p { grid-column:auto; }
+    .ensha-compact-metrics.five { grid-template-columns:1fr 1fr; }.ensha-status-form { align-items:stretch; flex-direction:column; }.ensha-status-form input,.ensha-status-form select { width:100%; min-width:0; }.ensha-session-item { align-items:flex-start; flex-wrap:wrap; }.ensha-impersonation-banner { align-items:flex-start; flex-direction:column; }.ensha-impersonation-banner form,.ensha-impersonation-banner button { width:100%; justify-content:center; }
+}

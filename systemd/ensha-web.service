@@ -1,0 +1,21 @@
+[Unit]
+Description=Ensha Laravel counselling centre web application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ensha
+EnvironmentFile=/var/www/ensha/.env
+ExecStart=/usr/bin/php artisan serve --host=127.0.0.1 --port=18850
+Restart=always
+RestartSec=3
+TimeoutStopSec=10
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/www/ensha/storage /var/www/ensha/database
+
+[Install]
+WantedBy=multi-user.target

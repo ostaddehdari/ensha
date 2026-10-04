@@ -1,0 +1,7 @@
+@extends('layouts.app', ['title'=>$centre->name])
+@section('content')
+<div class="ensha-page-heading"><div><span class="ensha-eyebrow">مرکز مشاوره</span><h2>{{ $centre->name }}</h2><p>کد: <b dir="ltr">{{ $centre->code }}</b> · {{ $centre->users_count }} حساب مرتبط</p></div>@if(auth()->user()->hasPermission('centres.manage'))<a class="ensha-secondary-btn" href="{{ route('centres.edit',$centre) }}">ویرایش مرکز</a>@endif</div>
+<section class="ensha-card" style="padding:24px"><p>تلفن: {{ $centre->phone ?: 'ثبت نشده' }} · ایمیل: {{ $centre->email ?: 'ثبت نشده' }}</p><p>نشانی: {{ $centre->address ?: 'ثبت نشده' }}</p><p>{{ $centre->description }}</p></section>
+<div class="ensha-page-heading"><h2>کارکنان مرکز</h2><a class="ensha-secondary-btn" href="{{ route('staff.index') }}">فهرست کارکنان</a></div>
+<section class="ensha-card"><div class="ensha-table-wrap"><table class="ensha-table"><thead><tr><th>نام</th><th>نقش</th><th>شماره تماس</th><th></th></tr></thead><tbody>@forelse($staff as $user)<tr><td>{{ $user->display_name }}</td><td>{{ $user->role_label }}</td><td dir="ltr">{{ $user->phone }}</td><td>@if(auth()->user()->hasPermission('counselors.manage'))<a href="{{ route('staff.edit',$user) }}">پرونده همکاری</a>@endif</td></tr>@empty<tr><td colspan="4">کارمندی ثبت نشده است.</td></tr>@endforelse</tbody></table></div><div class="ensha-pagination">{{ $staff->links() }}</div></section>
+@endsection
