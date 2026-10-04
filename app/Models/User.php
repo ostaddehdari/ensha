@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasOne(Client::class);
     }
 
+    public function caseAssignments(): HasMany
+    {
+        return $this->hasMany(CaseAssignment::class);
+    }
+
     public function assignedRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');

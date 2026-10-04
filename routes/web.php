@@ -8,6 +8,7 @@ use App\Http\Controllers\CentreBranchController;
 use App\Http\Controllers\CentreController;
 use App\Http\Controllers\CentreSettingsController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CounsellingCaseController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImpersonationController;
@@ -70,6 +71,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
         Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
         Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+
+        Route::get('/cases', [CounsellingCaseController::class, 'index'])->name('cases.index');
+        Route::get('/cases/create', [CounsellingCaseController::class, 'create'])->name('cases.create');
+        Route::post('/cases', [CounsellingCaseController::class, 'store'])->name('cases.store');
+        Route::get('/cases/{case}', [CounsellingCaseController::class, 'show'])->name('cases.show');
+        Route::get('/cases/{case}/edit', [CounsellingCaseController::class, 'edit'])->name('cases.edit');
+        Route::put('/cases/{case}', [CounsellingCaseController::class, 'update'])->name('cases.update');
+        Route::post('/cases/{case}/assignments', [CounsellingCaseController::class, 'assign'])->name('cases.assignments.store');
+        Route::delete('/cases/{case}/assignments/{assignment}', [CounsellingCaseController::class, 'unassign'])->name('cases.assignments.destroy');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');

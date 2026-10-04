@@ -140,3 +140,28 @@ Artisan::command('ensha:verify-stage02', function () {
     $this->info('VERIFY_STAGE02_OK');
     return 0;
 })->purpose('Verify Ensha Stage 02 / Work 01 after deployment');
+
+Artisan::command('ensha:verify-stage02w02', function () {
+    $errors = [];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.13.0') {
+        $errors[] = 'VERSION باید 0.13.0 باشد.';
+    }
+    foreach (['cases', 'case_assignments', 'case_status_histories'] as $table) {
+        if (! Schema::hasTable($table)) $errors[] = "جدول {$table} وجود ندارد.";
+    }
+    foreach (['cases' => ['client_id', 'centre_id', 'case_number', 'status', 'priority'], 'case_assignments' => ['case_id', 'user_id', 'assignment_role', 'status'], 'case_status_histories' => ['case_id', 'to_status', 'changed_by', 'changed_at']] as $table => $columns) {
+        foreach ($columns as $column) {
+            if (! Schema::hasColumn($table, $column)) $errors[] = "ستون {$table}.{$column} وجود ندارد.";
+        }
+    }
+    $requiredPermissions = ['cases.view', 'cases.manage', 'cases.assign'];
+    if (Schema::hasTable('permissions') && DB::table('permissions')->where('is_active', true)->whereIn('slug', $requiredPermissions)->count() !== count($requiredPermissions)) {
+        $errors[] = 'مجوزهای پرونده‌های مشاوره کامل نیستند.';
+    }
+    if ($errors !== []) {
+        foreach ($errors as $error) $this->error($error);
+        return 1;
+    }
+    $this->info('VERIFY_STAGE02_W02_OK');
+    return 0;
+})->purpose('Verify Ensha Stage 02 / Work 02 after deployment');

@@ -26,6 +26,7 @@ class Client extends \Illuminate\Database\Eloquent\Model
     public function centre(): BelongsTo { return $this->belongsTo(Centre::class); }
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function externalIdentities(): HasMany { return $this->hasMany(ExternalIdentity::class); }
+    public function cases(): HasMany { return $this->hasMany(CounsellingCase::class); }
 
     public function scopeVisibleTo(Builder $query, User $actor): Builder
     {

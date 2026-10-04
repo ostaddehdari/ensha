@@ -1,0 +1,15 @@
+@extends('layouts.app', ['title'=>$case->exists ? 'ویرایش پرونده' : 'ایجاد پرونده'])
+@section('content')
+<div class="ensha-page-heading"><div><span class="ensha-eyebrow">پرونده مشاوره</span><h2>{{ $case->exists ? 'ویرایش پرونده' : 'ایجاد پرونده' }}</h2><p>اطلاعات عملیاتی پرونده را ثبت کنید. جزئیات بالینی محرمانه در Work بعدی می‌آید.</p></div></div>
+<section class="ensha-card"><form method="POST" action="{{ $case->exists ? route('cases.update',$case) : route('cases.store') }}" class="grid gap-4 md:grid-cols-2">@csrf @if($case->exists) @method('PUT') @endif
+<label class="kt-form-label">مراجع @if($case->exists)<div class="kt-input mt-1">{{ $case->client?->user?->display_name }} — {{ $case->client?->client_code }}</div><input type="hidden" name="client_id" value="{{ $case->client_id }}">@else<select class="kt-input mt-1" name="client_id" required><option value="">انتخاب مراجع</option>@foreach($clients as $client)<option value="{{ $client->id }}" @selected((int)old('client_id')===$client->id)>{{ $client->client_code }} — {{ $client->user?->display_name }}</option>@endforeach</select>@endif</label>
+<label class="kt-form-label">عنوان پرونده<input class="kt-input mt-1" name="title" value="{{ old('title',$case->title) }}" required maxlength="190"></label>
+<label class="kt-form-label">وضعیت<select class="kt-input mt-1" name="status">@foreach(['open'=>'باز','on_hold'=>'در انتظار','closed'=>'بسته','archived'=>'بایگانی‌شده'] as $key=>$label)<option value="{{ $key }}" @selected(old('status',$case->status ?: 'open')===$key)>{{ $label }}</option>@endforeach</select></label>
+<label class="kt-form-label">اولویت<select class="kt-input mt-1" name="priority">@foreach(['normal'=>'عادی','high'=>'بالا','urgent'=>'فوری'] as $key=>$label)<option value="{{ $key }}" @selected(old('priority',$case->priority ?: 'normal')===$key)>{{ $label }}</option>@endforeach</select></label>
+<label class="kt-form-label">تاریخ شروع<input class="kt-input mt-1" type="date" name="opened_at" value="{{ old('opened_at',optional($case->opened_at)->format('Y-m-d')) }}"></label>
+<label class="kt-form-label">تاریخ پایان<input class="kt-input mt-1" type="date" name="closed_at" value="{{ old('closed_at',optional($case->closed_at)->format('Y-m-d')) }}"></label>
+<label class="kt-form-label md:col-span-2">علت مراجعه / خلاصه اولیه<textarea class="kt-input mt-1" name="presenting_issue" rows="4">{{ old('presenting_issue',$case->presenting_issue) }}</textarea></label>
+<label class="kt-form-label md:col-span-2">یادداشت اداری<textarea class="kt-input mt-1" name="administrative_notes" rows="3">{{ old('administrative_notes',$case->administrative_notes) }}</textarea></label>
+@if($case->exists)<label class="kt-form-label md:col-span-2">دلیل تغییر وضعیت<textarea class="kt-input mt-1" name="status_reason" rows="2" placeholder="اختیاری"></textarea></label>@endif
+<div class="md:col-span-2 flex gap-2"><button class="ensha-primary-btn">ذخیره پرونده</button><a class="ensha-secondary-btn" href="{{ $case->exists ? route('cases.show',$case) : route('cases.index') }}">انصراف</a></div></form></section>
+@endsection
