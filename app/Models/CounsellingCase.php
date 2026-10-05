@@ -33,6 +33,7 @@ class CounsellingCase extends \Illuminate\Database\Eloquent\Model
     public function sessions(): HasMany { return $this->hasMany(CounsellingSession::class, 'case_id'); }
     public function confidentialNotes(): HasMany { return $this->hasMany(ConfidentialNote::class, 'case_id'); }
     public function privateFiles(): HasMany { return $this->hasMany(PrivateFile::class, 'case_id'); }
+    public function appointments(): HasMany { return $this->hasMany(Appointment::class, 'case_id'); }
 
     public function scopeVisibleTo(Builder $query, User $actor): Builder
     {

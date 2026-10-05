@@ -64,6 +64,11 @@ class User extends Authenticatable
         return $this->hasMany(CaseAssignment::class);
     }
 
+    public function counselorAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'counselor_id');
+    }
+
     public function assignedRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');

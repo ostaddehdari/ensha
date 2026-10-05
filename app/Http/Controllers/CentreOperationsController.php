@@ -98,6 +98,11 @@ class CentreOperationsController extends Controller
             'name' => 'required|string|max:120',
             'minimum_minutes' => 'required|integer|min:1|max:1440',
             'session_minutes' => 'required|integer|min:1|max:1440',
+            'break_minutes' => 'required|integer|min:0|max:240',
+            'capacity' => 'required|integer|min:1|max:100',
+            'allowed_modes' => 'required|array|min:1',
+            'allowed_modes.*' => ['required', Rule::in(['in_person', 'phone', 'video'])],
+            'requires_room' => 'nullable|boolean',
             'price' => 'required|integer|min:0',
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
@@ -110,7 +115,9 @@ class CentreOperationsController extends Controller
             throw ValidationException::withMessages(['name' => 'این موضوع در دسته انتخاب‌شده وجود دارد.']);
         }
 
-        DB::table('service_topics')->insert([...$data, 'created_at' => now(), 'updated_at' => now()]);
+        $data['allowed_modes'] = json_encode(array_values(array_unique($data['allowed_modes'])));
+        $data['requires_room'] = (bool) ($data['requires_room'] ?? false);
+        DB::table('service_topics')->insert([...$data, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
 
         return back()->with('success', 'موضوع ثبت شد.');
     }
@@ -121,10 +128,17 @@ class CentreOperationsController extends Controller
         $data = $request->validate([
             'minimum_minutes' => 'required|integer|min:1|max:1440',
             'session_minutes' => 'required|integer|min:1|max:1440',
+            'break_minutes' => 'required|integer|min:0|max:240',
+            'capacity' => 'required|integer|min:1|max:100',
+            'allowed_modes' => 'required|array|min:1',
+            'allowed_modes.*' => ['required', Rule::in(['in_person', 'phone', 'video'])],
+            'requires_room' => 'nullable|boolean',
             'price' => 'required|integer|min:0',
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
         abort_unless($data['session_minutes'] >= $data['minimum_minutes'], 422);
+        $data['allowed_modes'] = json_encode(array_values(array_unique($data['allowed_modes'])));
+        $data['requires_room'] = (bool) ($data['requires_room'] ?? false);
         $updated = DB::table('service_topics')
             ->where('id', $topic)
             ->whereIn('category_id', DB::table('service_categories')->where('centre_id', $centre->id)->select('id'))
@@ -265,8 +279,9 @@ class CentreOperationsController extends Controller
     public function room(Request $request, Centre $centre)
     {
         $this->scope($request, $centre, 'schedules.manage');
-        $data = $request->validate(['name' => 'required|string|max:120', 'priority_user_id' => 'nullable|integer', 'topic_ids' => 'array', 'topic_ids.*' => 'integer']);
-        $id = DB::table('centre_rooms')->insertGetId(['centre_id' => $centre->id, 'name' => $data['name'], 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
+        $data = $request->validate(['name' => 'required|string|max:120', 'branch_id' => 'nullable|integer', 'capacity' => 'required|integer|min:1|max:100', 'room_type' => ['required', Rule::in(['consulting','group','virtual'])], 'priority_user_id' => 'nullable|integer', 'topic_ids' => 'array', 'topic_ids.*' => 'integer']);
+        if (! empty($data['branch_id'])) abort_unless(CentreBranch::whereKey($data['branch_id'])->where('centre_id', $centre->id)->exists(), 403);
+        $id = DB::table('centre_rooms')->insertGetId(['centre_id' => $centre->id, 'branch_id' => $data['branch_id'] ?? null, 'name' => $data['name'], 'capacity' => $data['capacity'], 'room_type' => $data['room_type'], 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         $this->saveRoomPreferences($centre, $id, $data);
 
         return back()->with('success', 'اتاق ثبت شد.');
@@ -275,8 +290,9 @@ class CentreOperationsController extends Controller
     public function updateRoom(Request $request, Centre $centre, int $room)
     {
         $this->scope($request, $centre, 'schedules.manage');
-        $data = $request->validate(['priority_user_id' => 'nullable|integer', 'topic_ids' => 'array', 'topic_ids.*' => 'integer']);
+        $data = $request->validate(['capacity' => 'required|integer|min:1|max:100', 'room_type' => ['required', Rule::in(['consulting','group','virtual'])], 'priority_user_id' => 'nullable|integer', 'topic_ids' => 'array', 'topic_ids.*' => 'integer']);
         abort_unless(DB::table('centre_rooms')->where('id', $room)->where('centre_id', $centre->id)->exists(), 404);
+        DB::table('centre_rooms')->where('id', $room)->update(['capacity' => $data['capacity'], 'room_type' => $data['room_type'], 'updated_at' => now()]);
         $this->saveRoomPreferences($centre, $room, $data);
 
         return back()->with('success', 'تنظیمات اتاق ذخیره شد.');
@@ -402,6 +418,8 @@ class CentreOperationsController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        return view('centres.rooms', compact('centre', 'rooms', 'topics', 'counselors'));
+        $branches = CentreBranch::where('centre_id', $centre->id)->where('is_active', true)->orderByDesc('is_default')->get();
+
+        return view('centres.rooms', compact('centre', 'rooms', 'topics', 'counselors', 'branches'));
     }
 }

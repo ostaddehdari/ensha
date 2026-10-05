@@ -23,6 +23,10 @@ use App\Http\Controllers\SelfProfileController;
 use App\Http\Controllers\UserAssignmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserSessionController;
+use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\AppointmentSlotController;
+use App\Http\Controllers\ServiceTariffController;
+use App\Http\Controllers\ScheduleExceptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -102,6 +106,19 @@ Route::middleware('auth')->group(function () {
         Route::patch('/cases/{case}/notes/{note}/finalize', [CaseClinicalController::class, 'finalizeNote'])->middleware('throttle:sensitive')->name('cases.notes.finalize');
         Route::post('/cases/{case}/notes/{note}/addenda', [CaseClinicalController::class, 'storeAddendum'])->name('cases.notes.addenda.store');
 
+        Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
+        Route::post('/appointments', [AppointmentController::class, 'store'])->middleware('throttle:sensitive')->name('appointments.store');
+        Route::get('/appointments/slots', [AppointmentSlotController::class, 'index'])->name('appointments.slots.index');
+        Route::post('/appointments/slots/generate', [AppointmentSlotController::class, 'generate'])->middleware('throttle:sensitive')->name('appointments.slots.generate');
+        Route::patch('/appointments/slots/{slot}/block', [AppointmentSlotController::class, 'block'])->middleware('throttle:sensitive')->name('appointments.slots.block');
+        Route::get('/appointments/tariffs', [ServiceTariffController::class, 'index'])->name('appointments.tariffs.index');
+        Route::post('/appointments/tariffs', [ServiceTariffController::class, 'store'])->middleware('throttle:sensitive')->name('appointments.tariffs.store');
+        Route::post('/schedule-exceptions', [ScheduleExceptionController::class, 'store'])->name('schedule-exceptions.store');
+        Route::delete('/schedule-exceptions/{exception}', [ScheduleExceptionController::class, 'destroy'])->name('schedule-exceptions.destroy');
+        Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
+        Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'transition'])->middleware('throttle:sensitive')->name('appointments.transition');
+
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');
         Route::get('/users/deleted', [UserController::class, 'trash'])->name('users.trash');
@@ -150,7 +167,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/centres/{centre}/rooms', [CentreOperationsController::class,'roomsPage'])->name('centres.rooms');
         Route::get('/module/work-hours', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.work-hours', $request->user()->centre_id))->name('module.work-hours');
         Route::get('/module/fees', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.topics', $request->user()->centre_id))->name('module.fees');
-        Route::get('/module/appointments', fn(\Illuminate\Http\Request $request) => redirect()->route('module', ['module'=>'appointments']))->name('module.appointments');
+        Route::get('/module/appointments', fn() => redirect()->route('appointments.index'))->name('module.appointments');
         Route::get('/module/holidays', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.holidays', $request->user()->centre_id))->name('module.holidays');
         Route::get('/module/leaves', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.leaves', $request->user()->centre_id))->name('module.leaves');
         Route::get('/module/rooms', fn(\Illuminate\Http\Request $request) => redirect()->route('centres.rooms', $request->user()->centre_id))->name('module.rooms');

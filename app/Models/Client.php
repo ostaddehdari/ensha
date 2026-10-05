@@ -33,6 +33,7 @@ class Client extends \Illuminate\Database\Eloquent\Model
     public function emergencyContacts(): HasMany { return $this->hasMany(EmergencyContact::class); }
     public function consents(): HasMany { return $this->hasMany(ClientConsent::class); }
     public function privateFiles(): HasMany { return $this->hasMany(PrivateFile::class); }
+    public function appointments(): HasMany { return $this->hasMany(Appointment::class); }
     public function mergedInto(): BelongsTo { return $this->belongsTo(self::class, 'merged_into_id'); }
     public function mergedSources(): HasMany { return $this->hasMany(self::class, 'merged_into_id'); }
 

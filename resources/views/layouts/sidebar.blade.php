@@ -38,6 +38,7 @@
             'holidays' => request()->routeIs('module.holidays') || request()->routeIs('centres.holidays'),
             'leaves' => request()->routeIs('module.leaves') || request()->routeIs('centres.leaves'),
             'rooms' => request()->routeIs('module.rooms') || request()->routeIs('centres.rooms'),
+            'appointments', 'my-appointments', 'my-calendar', 'new-appointment' => request()->routeIs('appointments.*'),
             default => request()->routeIs('module') && request()->route('module') === $slug,
         };
     };
@@ -72,6 +73,8 @@
                         elseif (($item['slug'] ?? '') === 'holidays') $href = route('module.holidays');
                         elseif (($item['slug'] ?? '') === 'leaves') $href = route('module.leaves');
                         elseif (($item['slug'] ?? '') === 'rooms') $href = route('module.rooms');
+                        elseif (in_array(($item['slug'] ?? ''), ['appointments', 'my-appointments', 'my-calendar'], true)) $href = route('appointments.index');
+                        elseif (($item['slug'] ?? '') === 'new-appointment') $href = route('appointments.create');
                         elseif (($item['slug'] ?? '') === 'staff') $href = route('staff.index');
                         elseif (($item['slug'] ?? '') === 'clients') $href = route('clients.index');
                         elseif (($item['slug'] ?? '') === 'cases') $href = route('cases.index');

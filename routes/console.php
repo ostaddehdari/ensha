@@ -180,6 +180,7 @@ Artisan::command('ensha:verify-stage02-complete', function () {
         if (! Schema::hasTable($table)) $errors[] = "جدول {$table} وجود ندارد.";
     }
     $columns = [
+        'official_holidays' => ['gregorian_date'],
         'clients' => ['merged_into_id', 'merged_at', 'merged_by'],
         'client_intakes' => ['client_id', 'intake_number', 'risk_level', 'status'],
         'client_guardians' => ['client_id', 'full_name', 'has_legal_authority'],
@@ -216,3 +217,26 @@ Artisan::command('ensha:verify-stage02-complete', function () {
     $this->info('VERIFY_STAGE02_COMPLETE_OK');
     return 0;
 })->purpose('Verify completed Ensha Stage 02 / v0.14.0');
+
+Artisan::command('ensha:verify-stage03-complete', function () {
+    $errors = [];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.15.0') $errors[] = 'VERSION باید 0.15.0 باشد.';
+    $tables = ['schedule_exceptions', 'service_tariffs', 'appointment_slots', 'appointments', 'appointment_status_histories'];
+    foreach ($tables as $table) if (! Schema::hasTable($table)) $errors[] = "جدول {$table} وجود ندارد.";
+    $columns = [
+        'service_topics' => ['allowed_modes', 'break_minutes', 'capacity', 'requires_room', 'is_active'],
+        'centre_rooms' => ['branch_id', 'capacity', 'room_type'],
+        'counselor_shifts' => ['branch_id', 'slot_interval_minutes', 'break_minutes', 'is_active'],
+        'service_tariffs' => ['topic_id', 'counselor_id', 'branch_id', 'scope_key', 'version', 'valid_from', 'valid_until'],
+        'appointment_slots' => ['topic_id', 'counselor_id', 'starts_at', 'capacity', 'booked_count', 'lock_version'],
+        'appointments' => ['appointment_number', 'slot_id', 'seat_number', 'status', 'price'],
+        'appointment_status_histories' => ['appointment_id', 'from_status', 'to_status', 'changed_at'],
+    ];
+    foreach ($columns as $table => $required) foreach ($required as $column) if (! Schema::hasColumn($table, $column)) $errors[] = "ستون {$table}.{$column} وجود ندارد.";
+    $requiredPermissions = ['appointments.view', 'appointments.manage', 'appointments.status', 'slots.manage', 'tariffs.view', 'tariffs.manage', 'schedule_exceptions.manage'];
+    if (Schema::hasTable('permissions') && DB::table('permissions')->where('is_active', true)->whereIn('slug', $requiredPermissions)->count() !== count($requiredPermissions)) $errors[] = 'مجوزهای کامل Stage 03 ثبت نشده‌اند.';
+    if (config('appointments.lock_store') !== 'redis') $errors[] = 'قفل نوبت باید روی Redis تنظیم شود.';
+    if ($errors !== []) { foreach ($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE03_COMPLETE_OK');
+    return 0;
+})->purpose('Verify completed Ensha Stage 03 / v0.15.0');
