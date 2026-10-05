@@ -28,6 +28,8 @@ use App\Http\Controllers\AppointmentSlotController;
 use App\Http\Controllers\ServiceTariffController;
 use App\Http\Controllers\ScheduleExceptionController;
 use App\Http\Controllers\SecretaryCalendarController;
+use App\Http\Controllers\DailyOperationsController;
+use App\Http\Controllers\TelephoneConsultationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -108,6 +110,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/cases/{case}/notes/{note}/addenda', [CaseClinicalController::class, 'storeAddendum'])->name('cases.notes.addenda.store');
 
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/operations', [DailyOperationsController::class, 'index'])->name('operations.index');
+        Route::post('/operations/appointments/{appointment}/check-in', [DailyOperationsController::class, 'checkIn'])->middleware('throttle:sensitive')->name('operations.check-in');
+        Route::post('/operations/appointments/{appointment}/start', [DailyOperationsController::class, 'startSession'])->middleware('throttle:sensitive')->name('operations.start');
+        Route::post('/operations/appointments/{appointment}/end', [DailyOperationsController::class, 'endSession'])->middleware('throttle:sensitive')->name('operations.end');
+        Route::post('/operations/appointments/{appointment}/no-show', [DailyOperationsController::class, 'noShow'])->middleware('throttle:sensitive')->name('operations.no-show');
+        Route::post('/operations/appointments/{appointment}/cancel', [DailyOperationsController::class, 'cancel'])->middleware('throttle:sensitive')->name('operations.cancel');
+        Route::post('/operations/appointments/{appointment}/reschedule', [DailyOperationsController::class, 'reschedule'])->middleware('throttle:sensitive')->name('operations.reschedule');
+        Route::post('/operations/waitlist', [DailyOperationsController::class, 'storeWaitlist'])->middleware('throttle:sensitive')->name('operations.waitlist.store');
+        Route::post('/operations/waitlist/{waitlist}/promote', [DailyOperationsController::class, 'promoteWaitlist'])->middleware('throttle:sensitive')->name('operations.waitlist.promote');
+        Route::post('/operations/sms/reminders', [DailyOperationsController::class, 'sms'])->middleware('throttle:sensitive')->name('operations.sms.reminders');
+        Route::get('/operations/report', [DailyOperationsController::class, 'report'])->name('operations.report');
+        Route::get('/operations/telephone', [TelephoneConsultationController::class, 'index'])->name('operations.telephone');
+        Route::post('/operations/telephone', [TelephoneConsultationController::class, 'store'])->middleware('throttle:sensitive')->name('operations.telephone.store');
         Route::get('/appointments/calendar', [SecretaryCalendarController::class, 'index'])->name('appointments.calendar');
         Route::prefix('/appointments/calendar/api')->name('appointments.calendar.api.')->group(function () {
             Route::get('/resources', [SecretaryCalendarController::class, 'resources'])->name('resources');

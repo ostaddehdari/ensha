@@ -10,6 +10,7 @@ c5f5c1f5b47f14affe573ae5b99498baea5ee31738e4556c5926f48023046826  ./CHANGELOG-v0
 0008f2eafe2a0e6e0707dbd55b9f5f18520001fa57d638e3b1c1a98930baf4f6  ./CHANGELOG-v0.14.0.fa.md
 aee1686d75075d495a298f4155e8d38a0e46a8b4620ce4e4980328d8a92b59e3  ./CHANGELOG-v0.15.0.fa.md
 59dc9ef6218251789e670e609b62e34e61b223c5c0dfafe2f929c1bdee9ec9b6  ./CHANGELOG-v0.16.0.fa.md
+da968525f15ab150c1d35a8eb96798667cea3006b303f26a554168dd26a4f381  ./CHANGELOG-v0.17.0.fa.md
 f1e7d1174f81fa6008a1271c4331730eb91f5278a0cdb17cc0ffd32326b803ee  ./CHANGELOG-v0.4.fa.md
 c23ada00454b4f55f3a306261ecc2fe6d68c237c1b1f35b2a73b4e7e121b6941  ./CHANGELOG-v0.5.fa.md
 21599872389b3623d0a1dad61a23299fac96649cebce798e861770b4dd34aed3  ./CHANGELOG-v0.6.1.fa.md
@@ -24,6 +25,7 @@ f225523abee76f2c7a4f2f5e91b32c23ee35cfe3d4110d3cbd9aca9901e5f295  ./CHANGELOG.fa
 56ab96ec2ae2eddc79e1f9d6698104a0634f71adb0ca69f35b5cef5639d09bb3  ./INSTALL-STAGE02-W02.fa.md
 338d4df02c07e5a2e30f76108ccc4f23451e140b093019814b67a5916cf00b59  ./INSTALL-STAGE03-COMPLETE.fa.md
 227684d431c1a7309a1fa37dc72a77b5e5ec26412d3c553db8fafdfae2c375e2  ./INSTALL-STAGE04-COMPLETE.fa.md
+b97bdd3a5567d1ee2dd534050bdd1db67b7840ffbf5ea3bc1c082eb62ffa840e  ./INSTALL-STAGE05-COMPLETE.fa.md
 614ed6903eb6dbfe3537a24ee05bbf1a96312eea858e535e3925987e1a8cdbfc  ./README-v0.10.1.fa.md
 41897cff0261dd9dbb4a329a677dde36040bcd1b0768d22634d6e086ceca5e48  ./README-v0.10.2.fa.md
 075ee55fbd8ab52000356f9d4df1ce2ef26bac2cabb7dd019a642f4ec0ed5ea9  ./README-v0.10.4.fa.md
@@ -33,6 +35,7 @@ e65b037c486717967a429f73da4fda34341202ad394fe0d9ced73e0faa68c044  ./README-v0.10
 c0acff093d7831ce9b08718452195b6d1f81d509db6c0a52e688d1ac5cfd60a9  ./README-v0.14.0.fa.md
 23b00107d1eed5f1980aa35cd5c8174de3ba150b310ae6425a82a39d078e35c6  ./README-v0.15.0.fa.md
 9165720ee376c1eca13b330aa8a2891125d60bdf978ff18ea22316ea630b0190  ./README-v0.16.0.fa.md
+bf07e7f7059332e62b5acafe4c651a8bb5c972bcc10462ebe013a32e74eef76b  ./README-v0.17.0.fa.md
 e23941efbcc61eb0ad763867e9ff9fd4a61c54499064f47409f603f0e96bcc60  ./README-v0.4.fa.md
 374981b38ece8face247b7ac20d99e87c7da43fed9cb8d01af0b25a35a5b71b6  ./README-v0.5.fa.md
 c6e5eedc3f1e96a731561b973718e8c8bd1802eab3a61f54039e398fb7faf737  ./README-v0.6.1.fa.md
@@ -41,7 +44,7 @@ c6e5eedc3f1e96a731561b973718e8c8bd1802eab3a61f54039e398fb7faf737  ./README-v0.6.
 ea1260a17c27d194b0289dceabbd40843ddaa1b040109c6c44eecbf2f94d3901  ./README-v0.8.fa.md
 03fdf15c9cd0f3914aece2a5d808c1a61e014b1cb33ba5e49a457186fa0f87ae  ./README-v0.9.fa.md
 4a2d142382779370bb4cb8dc418fd99531703bce254505e83e545ce9e7d42e16  ./README.fa.md
-aa037454b5e8320521a32b278a3f4aff05fc79009ab5503f5d4a1b9a33b38c47  ./VERSION
+02d38e98e88f4a8dc2ea40dbb769338601066fc94920b52882a14f21ad97f7ee  ./VERSION
 fd09142750fd98e47f8b474b867f69912d3dbebb206d7e6cab7a40f5048ce6ba  ./app/Http/Controllers/AccountPasswordController.php
 ad2a806b73731846a8d73e449a3a016d01c8c522de889e2b4c3e751c8a4d2048  ./app/Http/Controllers/ActiveRoleController.php
 8dc0e16e8dfb3967c884382fee636ba7a23b414790d9c02ecfd54b17c9ca3fae  ./app/Http/Controllers/AppointmentController.php
@@ -57,6 +60,7 @@ dd74ed08a780541e05e03b913d5434079c62402d12f0870e18e0be77e71f84dc  ./app/Http/Con
 79cc67657a23a7432b50cfe5291dddb9d06bda66d2383832a5b610cc2e54d55e  ./app/Http/Controllers/ClientRecordController.php
 c8003e8880a05813b8deb2e5081fbc6e99773675596a95186721fa32a3b1ce4c  ./app/Http/Controllers/Controller.php
 4d1627da8931e22a1b4d4ae17779268cdd2e97c8e38eba8ff1a72c3e4d1117e3  ./app/Http/Controllers/CounsellingCaseController.php
+8da8af635daf63e22c47602b9d497223df26e473763d852d4c4c9d54ac3ebb89  ./app/Http/Controllers/DailyOperationsController.php
 6c44c9befd6e3c787bce0bfb76ee314d98ee3006ca5e9a1822699da3389a159e  ./app/Http/Controllers/DashboardController.php
 01e7d8fd283cb1ef437169f7f3d3e1d794ccad78d8cd8eb8c9ed4f528a90b504  ./app/Http/Controllers/ImpersonationController.php
 27e95cbc0e0bebcc2f65d74bbcb89bcce276f76f77b81befb66a4964ef5657ec  ./app/Http/Controllers/PermissionController.php
@@ -68,6 +72,7 @@ ada878d89dd8891594e7d8f037f064ce653635bb6f6540af9579d4aa3ade06ea  ./app/Http/Con
 0d5e8af0efb24a8b577b72bfeb73137eb1e27d959538f19a0b3d23cc67c8433f  ./app/Http/Controllers/SelfProfileController.php
 28c4d3e33724d74d734d2a7fe72e0ee927d9981c52c141f6a8fd33dda8b8538a  ./app/Http/Controllers/ServiceTariffController.php
 a38f9bfd553a97154e8a9836f33640292aac961b4f52d812dca13b0fea5af354  ./app/Http/Controllers/StaffController.php
+c21a42d46a63262581f99b7cbccf33db274279df46ad0e8a9c366a66e8920fd9  ./app/Http/Controllers/TelephoneConsultationController.php
 209f1de647771cb1a8bb5b859007213f602ec2b7109a898f73f1783ed6490bab  ./app/Http/Controllers/UserAssignmentController.php
 13651928755ef5aa78f666369b7a92690da7aa14780324d303b6592be525a7f7  ./app/Http/Controllers/UserController.php
 fd285f686f5374c2fc412ae0070bde3e90784bfe5482b649cd83d057bc1e834b  ./app/Http/Controllers/UserSessionController.php
@@ -82,8 +87,10 @@ c8cc724041167665d37508c392f0a9764afbbd1b943a26fff951dcbed3180773  ./app/Http/Mid
 50f233057f1e3a61d1ad504db0c364c7818f865f94ea1f054bbdddf8cf38a08c  ./app/Http/Requests/UpdateRoleRequest.php
 fe18fd84e41eb2242760d2be37f755776666eee6588514e195c1491b9d5ee8a8  ./app/Http/Requests/UpdateUserRequest.php
 0797ce9bde2cbc81b958bea39bf70eb67ca74a71c89e76fd5c298b013480fa89  ./app/Models/Appointment.php
+1780880b01168706db6013b3e2155613a2c724ecf2307bbf5aab0b9a8a7d51ee  ./app/Models/AppointmentReschedule.php
 268929c72db99da663ef66319859a4b512273c2638e6cb1532885b2c12d9b48a  ./app/Models/AppointmentSlot.php
 e81d41410a28892816048d42ac07fdb56efd761a875ee4160de31fccc744135a  ./app/Models/AppointmentStatusHistory.php
+9538c1489a95c668e54f6953e8f1326c97761123ee42bff56d1e7c822398d6c9  ./app/Models/AppointmentWaitlist.php
 a70cad32d21bfb7686fcbf921292dbe7bc262965bf4fbddb0ae2c976bbb70c95  ./app/Models/AuditLog.php
 74bd7ba7110c14492c0e0f9c73e317d8a2d068717c637e6308faad7663c67668  ./app/Models/CaseAssignment.php
 fd9f940e1c70e5d370a4ee553eaf6bffd326c4d80d9adfeb9bc4b0e12409e46c  ./app/Models/CaseStatusHistory.php
@@ -110,7 +117,9 @@ d5ee272d3c883c9c33f66bd5472b6d4ce381c05f0095a7af9a0cfb712b94a5b6  ./app/Models/S
 0d99f80786b9105e671035e1b1f03ef2956e216e65c971bebcf9069b4ee3bd77  ./app/Models/ServiceCategory.php
 918bee2c0a2c09612436cf21a920c5367cd6984b2ece468429ee2b1b133528a6  ./app/Models/ServiceTariff.php
 a1c1676e1e817b4aa796f386e882b2233ba6c3a34bfd984769f295627f1a324d  ./app/Models/ServiceTopic.php
+a1dbd13845ccd3bba435c4d53bdcd53bb8eeeac0248b05b2505b4b974f89c70e  ./app/Models/SmsMessage.php
 ece623985d3ef06dd8c9230075d8410f1f2f4de1292e5af6604f7628737c8fe4  ./app/Models/StaffProfile.php
+65c8ede98b7be4564278466a431e407eafffb244e1cee13660582daac180d349  ./app/Models/TelephoneConsultation.php
 366bb5e50a07d8a86cd3a5818a7c7bf42afddc4da35a7797bf3c9998977a522a  ./app/Models/User.php
 d274a8ae101215ab6c0a0bd1caa116fa7520ca419dd131312f7cf348c750e4b0  ./app/Models/UserRoleCentre.php
 03b45d3cb27ec8b2c9fc955679b6bc06f79055906c7e19ff485c7cda73957c00  ./app/Models/UserSession.php
@@ -168,6 +177,7 @@ b9a706c214b67e8d7f9157cc63e34996c6c99f05ec3fffb5d003908b66268711  ./database/mig
 252d5697394b7d1bff99c46772bcf1dfa894f5ac0bafb6c8a59cc598b9934b77  ./database/migrations/2026_10_04_000014_complete_stage02_client_records.php
 322613c4b8b6d1d20c1ee4f769a0d41a6a5635ce62dfa282f3223ef0986ccfd4  ./database/migrations/2026_10_05_000015_complete_stage03_appointment_engine.php
 f315e58c08178518f03701718e5772025e8fb2eb2ef50dc099244a85cdc3a2d0  ./database/migrations/2026_10_05_000016_stage04_secretary_calendar.php
+33d30ff87ab119c3b9049ab65c5b8dceeb5b4004f4e958a9965b3993c9aa5d94  ./database/migrations/2026_10_05_000017_stage05_daily_operations.php
 c51e5786c8e6060ce7733340cc0a4f2e63b08a437c237242957a2beb958b9a1c  ./database/seeders/DatabaseSeeder.php
 44f162848ff48a1632ec19ea5ced5166fd35cfd4486e84857b8dc347e1284f09  ./deploy/database-config.php
 fe69931a698ab51d9456592b29691fadab3dd8f9163fcb7d956ab3d34ea0a7e7  ./deploy/install.sh
@@ -177,6 +187,7 @@ ac9e4c08f03a920bd3ba3a501aab4f1aafd5b36489ca11585d42eae6ab584dae  ./deploy/rollb
 ceb1200279c0cc884367e646605195af8b5774e684f2e742fd3f31b833acb8c2  ./deploy/rollback-v0.14.0.sh
 f208137d158c52d33a7f7b7d9e562343602df454e3b88f7ba5f976216b7635e4  ./deploy/rollback-v0.15.0.sh
 3d03f274255417eeed23ad52f28301d7503d8be33f6aa897c55bd11133bdeeee  ./deploy/rollback-v0.16.0.sh
+fb94263de91599e19c2aef453303a9cf542284b90d32baf0e4cab9783f9b5ffd  ./deploy/rollback-v0.17.0.sh
 695a43a31bbd74484f938b2ad47e0cf8b81f72e5cc9e5a8c207b6b2b519b665d  ./deploy/update-ui.sh
 051c57cc4cb7b41d2d08d8693e5c8bde457ff00a3d71a99883d982e28bb204e6  ./deploy/update-v0.10.1.sh
 61552e2264cf11c0dce34aed366d1720571dbc07b442efeb71e83c06ea1e4ea3  ./deploy/update-v0.10.2.sh
@@ -188,6 +199,7 @@ cd9fa6b1d9fe790a16758263cd3dbd2ab720ce272140893b1964d147dd683280  ./deploy/updat
 08ac171ace35a04260c3379621bc7a1b87f462dc1681cf97b292c88a9d684a05  ./deploy/update-v0.14.0.sh
 890ac10d8e736b3dbffdbdfbb1d32d016cc1665cc74c0a48b385f244219abced  ./deploy/update-v0.15.0.sh
 bbd024cdb9a450307966c8adb367633e69c7bc104abdeac1ceb4c0f0e2398dfa  ./deploy/update-v0.16.0.sh
+35a467bcbe8120f9ca43614a432b77756933714a0abb058884de7aba123a4b99  ./deploy/update-v0.17.0.sh
 1dabf37a6727568ec0b8c67d7f64b8a99007dc1cc3261152edf07c57859451aa  ./deploy/update-v0.3.sh
 8f812753b1101838cb1b1d9cde08de4d25ea1dfa96fa3852b49fa1548cb93d15  ./deploy/update-v0.4.sh
 6e2a1692f6f33587a171540549e9685cc4ce2b2e9aff6cad8e8e26539a6eee96  ./deploy/update-v0.5.sh
@@ -202,6 +214,7 @@ b4025091b51810021d515dac08aa112f74c4b834830aa04f5ff114544d8a366b  ./install-stag
 21b3100722450b7df51fce1e536d20db567d56cddc072274935b93da2242bd92  ./install-stage02w02.sh
 cd1aaee7fc685c1f975a8824e143ae984252104fc3ac73f0c27a6c3c773ccb86  ./install-stage03-complete.sh
 72d4692cdf20b03b9d337ba7711e0353c0be9f86ec1067cf7ad799102e367c98  ./install-stage04-complete.sh
+29928340f76ce51fc76b75b75e5f68aa95c5fc198f75f76f29d2c7a591781132  ./install-stage05-complete.sh
 37c046b3d5f72825428bdbb8ba7b62330f20b1b812442aca094393d2bc06033e  ./nginx/ensha-location.conf
 6c06f5271d50036d0c751b4274fab8d88ad09a866608100239da1c654c083dc1  ./phpunit.xml
 f41b82dc7eeb173ad0ff5166c40eeaa40b9be43f2922b327992b2bc4ad0cb35e  ./public/assets/css/core.bundle.css
@@ -246,7 +259,7 @@ e1b6950fabc53f333db98f4d2654c09e94e9b3607b62582e05197ba81b555fa0  ./resources/vi
 d1da7ca6267cbabf41b8b153467afc4719d81d99e755686760f5660a08ba0365  ./resources/views/appointments/calendar.blade.php
 fe166cc910baef05544f1635e84bf26c24bb6c0f3388f73a1c138996ec87f05c  ./resources/views/appointments/create.blade.php
 03796d32114179d5c40fff136077ca5670fe836840f9bf559f6bdf472695e3c1  ./resources/views/appointments/index.blade.php
-36c644aabf69ca8b908ccbd6892af3bd5c92de31bc0ada849340635d918aac83  ./resources/views/appointments/partials/nav.blade.php
+e855aee241ab36df03d79f192bd836eba1e0ca71827762992377c0124493ca7e  ./resources/views/appointments/partials/nav.blade.php
 daebebb3e7759e95d10b8f6e77b03162c847a9e8f123e05500e4f891702986e7  ./resources/views/appointments/show.blade.php
 c0b813a6f766a6170354cf29f494f983d302f66082e23bfa9516fd99720b5edb  ./resources/views/appointments/slots.blade.php
 8f0d04327fc6cedb8523d068081f7e57d6de13636f39aa50a9ac0a97c4b1b22a  ./resources/views/appointments/tariffs.blade.php
@@ -274,6 +287,9 @@ f54687973920b2f2883770840912569ba11c83a0b4bbb049fbd40f2c154b49b2  ./resources/vi
 6d267329731501c33274956835f20e07955165dfaaa900999b3497cff025deed  ./resources/views/dashboard/index.blade.php
 563f988fc9f686b9e6451f6f29139f8b602d00bad6add34d206275edda249990  ./resources/views/layouts/app.blade.php
 be6bfcc40dfc88a7112bc9405d2b558cb20786ed837e32bedc95c820c168173b  ./resources/views/layouts/sidebar.blade.php
+d05148d7a751e2b9b4da1ac4da577f087ef46c26340ab4f8f0684baa13db5060  ./resources/views/operations/index.blade.php
+a7f211a4ee0b1e1bd7615346e5e5cd5d395bb2aa17ffa27d4bd7479d163c25f1  ./resources/views/operations/report.blade.php
+61c5bceee30d268fb2aee74b0782913e081ca8115b6d3c6f9d4dde58bb70e459  ./resources/views/operations/telephone.blade.php
 8008a1bf36e18f32d6d6784a02f73dec333f99b0d8026d1865cafb02f0492fc5  ./resources/views/pages/placeholder.blade.php
 ff22420e43ca9d1ece93ba05fb25cecfa5e3906bffdb459ad73b462a35a8caf9  ./resources/views/permissions/index.blade.php
 bfffdfd56e13fe6215bdbee2465a60c57d0877ddc7a9d7123abfe986bb980587  ./resources/views/profile-fields/index.blade.php
@@ -292,8 +308,8 @@ e0e7c97e98107ae489723f849359356f27d5dd5506d770719ce9f2aba1d79242  ./resources/vi
 0dc52b027bf2019a3c43a66bed4c04afcee255f22111d9c21f7f9317058c91de  ./resources/views/users/partials/profile-fields.blade.php
 4274a54950bce38307b2b71164951173dd0d21ce870d9ad762715620f09e3414  ./resources/views/users/show.blade.php
 31d9d6152a3dc849abb1127aa7d50ab52a14414207a0fb9a7601f4a6150aeb9c  ./resources/views/users/trash.blade.php
-dde67d87576fe4af76622ba1350bf4d7a784c5f69913044141030dba736e0d5d  ./routes/console.php
-0988baa924abcf4a10c89a0cf46b8e8267d245987ab608861e49cd527ca0afd0  ./routes/web.php
+aa49360c9fb8460238a4382c50793dcb442e9d07d5171a0f15b3c8515797800e  ./routes/console.php
+008d7850ffbf4515e13e60c380cef63fa03d13f55b4962d50279ed0cfed52911  ./routes/web.php
 8e3bead4285f13cc630a55dc1b37237f0cc71444f7661671364edd48e08eacf4  ./systemd/ensha-web.service
 13c0a3a4871b6e3da33325d2b935ef0d281d2c806a763d7401b37eb0ecd3ee1e  ./tests/Feature/AccessControlTest.php
 b39d0dfb6a862be161aa6005f9dc98bba43288b145a687524153fd67e9531047  ./tests/Feature/ProfileBuilderTest.php
@@ -314,3 +330,4 @@ d6cb7ff5f6bb19aaeddaa5aad8b18097834c6bba879eca600866896fce579e21  ./verify-stage
 f3c93fef6f4470ccd724893e150dd4ce1e7558429197decc3d0cef1b57c5bdc4  ./verify-stage02w02.sh
 5e4748072871435a1535d1fc38f2cff538e83a4199b13e1fd11bbd2ecc56eca4  ./verify-stage03-complete.sh
 6830d9eaae05f9bb047998a59ded0edd3e3ec529f4aecaec3f8d6f63dd1f93c4  ./verify-stage04-complete.sh
+95d93ffd17334c4608edd4459376b30320960f42110d40b1711a3bc3d1399d8d  ./verify-stage05-complete.sh

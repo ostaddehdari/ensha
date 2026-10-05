@@ -253,3 +253,12 @@ Artisan::command('ensha:verify-stage04-complete', function () {
     $this->info('VERIFY_STAGE04_COMPLETE_OK');
     return 0;
 })->purpose('Verify completed Ensha Stage 04 / v0.16.0');
+
+Artisan::command('ensha:verify-stage05-complete', function () {
+    $errors=[];
+    if(trim((string)@file_get_contents(base_path('VERSION'))) !== '0.17.0') $errors[]='VERSION باید 0.17.0 باشد.';
+    foreach(['appointment_waitlists','appointment_reschedules','telephone_consultations','sms_messages'] as $table) if(!Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    foreach(['checked_in_at','checked_in_by','session_started_at','session_ended_at','no_show_at'] as $column) if(!Schema::hasColumn('appointments',$column)) $errors[]="ستون appointments.{$column} وجود ندارد.";
+    foreach(['operations.index','operations.telephone','operations.report','operations.check-in','operations.waitlist.store','operations.sms.reminders'] as $route) if(!\Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} ثبت نشده است.";
+    if($errors!==[]){foreach($errors as $error)$this->error($error);return 1;}$this->info('VERIFY_STAGE05_COMPLETE_OK');return 0;
+})->purpose('Verify completed Ensha Stage 05 / v0.17.0');
