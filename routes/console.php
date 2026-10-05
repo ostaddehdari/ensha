@@ -262,3 +262,25 @@ Artisan::command('ensha:verify-stage05-complete', function () {
     foreach(['operations.index','operations.telephone','operations.report','operations.check-in','operations.waitlist.store','operations.sms.reminders'] as $route) if(!\Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} ثبت نشده است.";
     if($errors!==[]){foreach($errors as $error)$this->error($error);return 1;}$this->info('VERIFY_STAGE05_COMPLETE_OK');return 0;
 })->purpose('Verify completed Ensha Stage 05 / v0.17.0');
+
+Artisan::command('ensha:verify-stage06-complete', function () {
+    $errors=[];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.18.0') $errors[]='VERSION باید 0.18.0 باشد.';
+    foreach (['discounts','appointment_statuses','counselor_leave_requests','staff_work_sessions','staff_work_session_audits',
+        'staff_pay_rules','client_record_settings','client_profile_field_permissions','appointment_waitlists'] as $table) {
+        if (! Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    }
+    foreach (['public_id','source','duration_minutes','base_price','final_price','paid_amount','balance_amount',
+        'topic_name_snapshot','topic_color_snapshot','status_id','status_snapshot'] as $column) {
+        if (! Schema::hasColumn('appointments',$column)) $errors[]="ستون appointments.{$column} وجود ندارد.";
+    }
+    if (! Schema::hasColumn('clients','profile_state')) $errors[]='ستون وضعیت تکمیل پرونده وجود ندارد.';
+    foreach (['appointments.calendar.api.quote','stage06.clients.search','stage06.clients.quick','attendance.index','counselor.week','stage06.settings'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    }
+    foreach (['public/vendor/daypilot/daypilot-javascript.min.js','public/js/stage06-scheduler.js',
+        'resources/views/appointments/calendar.blade.php'] as $file) if (! file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    if (Schema::hasTable('appointments') && DB::table('appointments')->whereNull('public_id')->exists()) $errors[]='نوبت بدون شناسه عمومی وجود دارد.';
+    if ($errors) { foreach ($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE06_COMPLETE_OK'); return 0;
+})->purpose('Verify Stage 06 scheduling, records, leave and attendance / v0.18.0');

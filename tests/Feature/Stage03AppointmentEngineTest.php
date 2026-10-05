@@ -59,6 +59,9 @@ class Stage03AppointmentEngineTest extends TestCase
         $category = DB::table('service_categories')->insertGetId(['centre_id'=>$centre->id,'name'=>'Stage 03','created_at'=>now(),'updated_at'=>now()]);
         $topic = DB::table('service_topics')->insertGetId(['category_id'=>$category,'name'=>'جلسه آزمون','minimum_minutes'=>30,'session_minutes'=>60,'break_minutes'=>0,'capacity'=>1,'requires_room'=>false,'is_active'=>true,'price'=>1000000,'color'=>'#3366ff','allowed_modes'=>json_encode(['phone']),'created_at'=>now(),'updated_at'=>now()]);
         DB::table('counselor_topics')->insert(['user_id'=>$counselor->id,'topic_id'=>$topic]);
+        DB::table('counselor_shifts')->insert(['user_id'=>$counselor->id,'centre_id'=>$centre->id,
+            'weekday'=>now()->addDay()->dayOfWeek,'starts_at'=>'00:00:00','ends_at'=>'23:59:59',
+            'hourly_pay'=>0,'is_active'=>true,'created_at'=>now(),'updated_at'=>now()]);
         return [$centre,$manager,$counselor,$client,$topic];
     }
 

@@ -16,7 +16,8 @@ class SlotGenerator
             ->whereHas('category', fn ($q) => $q->where('centre_id', $centreId))
             ->where('is_active', true)->firstOrFail();
         abort_unless(in_array($mode, $topic->allowed_modes ?: ['in_person'], true), 422, 'شیوه ارائه برای این خدمت فعال نیست.');
-        abort_unless(DB::table('counselor_topics')->where('user_id', $counselorId)->where('topic_id', $topicId)->exists(), 422, 'این خدمت به مشاور تخصیص ندارد.');
+        abort_unless(DB::table('counselor_topics')->where('user_id', $counselorId)->where('topic_id', $topicId)
+            ->where('is_active',true)->where(fn ($q) => $q->whereNull('centre_id')->orWhere('centre_id',$centreId))->exists(), 422, 'این خدمت به مشاور تخصیص ندارد.');
 
         $startDate = CarbonImmutable::parse($from)->startOfDay();
         $endDate = CarbonImmutable::parse($to)->startOfDay();
@@ -27,6 +28,10 @@ class SlotGenerator
             DB::table('centre_rooms')->where('centre_id', $centreId)->orderBy('id')->lockForUpdate()->get();
             $created = 0;
             for ($date = $startDate; $date->lte($endDate); $date = $date->addDay()) {
+                if (! DB::table('counselor_topics')->where('user_id',$counselorId)->where('topic_id',$topic->id)
+                    ->where('is_active',true)->where(fn ($q) => $q->whereNull('centre_id')->orWhere('centre_id',$centreId))
+                    ->where(fn ($q) => $q->whereNull('valid_from')->orWhere('valid_from','<=',$date->toDateString()))
+                    ->where(fn ($q) => $q->whereNull('valid_until')->orWhere('valid_until','>=',$date->toDateString()))->exists()) continue;
                 if ($this->closed($centreId, $counselorId, $date)) continue;
                 foreach ($this->windows($centreId, $branchId, $counselorId, $date) as $window) {
                     $cursor = $date->setTimeFromTimeString($window->starts_at);

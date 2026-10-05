@@ -51,14 +51,18 @@ class AppointmentController extends Controller
         abort_unless($request->user()->hasPermission('appointments.view'), 403);
         abort_unless(Appointment::visibleTo($request->user())->whereKey($appointment)->exists(), 403);
         $appointment->load(['client.user', 'case', 'topic', 'counselor', 'slot.room', 'tariff', 'histories.actor']);
-        return view('appointments.show', compact('appointment'));
+        $statuses = \Illuminate\Support\Facades\DB::table('appointment_statuses')->where('centre_id',$appointment->centre_id)
+            ->where('is_active',true)->orderBy('sort_order')->get();
+        return view('appointments.show', compact('appointment','statuses'));
     }
 
     public function transition(Request $request, Appointment $appointment, AppointmentBookingService $booking)
     {
         abort_unless($request->user()->hasPermission('appointments.status'), 403);
         abort_unless(Appointment::visibleTo($request->user())->whereKey($appointment)->exists(), 403);
-        $data = $request->validate(['status' => ['required', Rule::in(Appointment::STATUSES)], 'reason' => 'nullable|string|max:1000']);
+        $data = $request->validate(['status' => 'required|string|max:24', 'reason' => 'nullable|string|max:1000']);
+        abort_unless(in_array($data['status'],Appointment::STATUSES,true) || \Illuminate\Support\Facades\DB::table('appointment_statuses')
+            ->where('centre_id',$appointment->centre_id)->where('slug',$data['status'])->where('is_active',true)->exists(),422);
         $booking->transition($appointment, $data['status'], $request->user()->id, $data['reason'] ?? null);
         return back()->with('success', 'وضعیت نوبت ثبت شد.');
     }

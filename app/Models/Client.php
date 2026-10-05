@@ -15,7 +15,7 @@ class Client extends \Illuminate\Database\Eloquent\Model
     protected $fillable = [
         'user_id', 'centre_id', 'client_code', 'status', 'date_of_birth', 'gender',
         'preferred_contact', 'referral_source', 'notes', 'created_by',
-        'merged_into_id', 'merged_at', 'merged_by',
+        'merged_into_id', 'merged_at', 'merged_by', 'profile_state',
     ];
 
     protected function casts(): array

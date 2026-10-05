@@ -30,6 +30,10 @@ use App\Http\Controllers\ScheduleExceptionController;
 use App\Http\Controllers\SecretaryCalendarController;
 use App\Http\Controllers\DailyOperationsController;
 use App\Http\Controllers\TelephoneConsultationController;
+use App\Http\Controllers\Stage06ClientController;
+use App\Http\Controllers\Stage06SettingsController;
+use App\Http\Controllers\StaffAttendanceController;
+use App\Http\Controllers\CounselorWorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -128,6 +132,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/resources', [SecretaryCalendarController::class, 'resources'])->name('resources');
             Route::get('/events', [SecretaryCalendarController::class, 'events'])->name('events');
             Route::get('/available-slots', [SecretaryCalendarController::class, 'availableSlots'])->name('available-slots');
+            Route::get('/quote', [SecretaryCalendarController::class, 'quote'])->name('quote');
             Route::post('/events', [SecretaryCalendarController::class, 'store'])->middleware('throttle:sensitive')->name('store');
             Route::patch('/events/{appointment}', [SecretaryCalendarController::class, 'updateEvent'])->middleware('throttle:sensitive')->name('update');
         });
@@ -142,6 +147,24 @@ Route::middleware('auth')->group(function () {
         Route::delete('/schedule-exceptions/{exception}', [ScheduleExceptionController::class, 'destroy'])->name('schedule-exceptions.destroy');
         Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])->name('appointments.show');
         Route::patch('/appointments/{appointment}/status', [AppointmentController::class, 'transition'])->middleware('throttle:sensitive')->name('appointments.transition');
+        Route::get('/stage06/clients/search', [Stage06ClientController::class,'search'])->middleware('throttle:sensitive')->name('stage06.clients.search');
+        Route::post('/stage06/clients/quick', [Stage06ClientController::class,'quickCreate'])->middleware('throttle:sensitive')->name('stage06.clients.quick');
+        Route::get('/stage06/clients/{client}/complete', [Stage06ClientController::class,'edit'])->name('stage06.clients.edit');
+        Route::put('/stage06/clients/{client}/complete', [Stage06ClientController::class,'update'])->middleware('throttle:sensitive')->name('stage06.clients.update');
+        Route::get('/stage06/settings', [Stage06SettingsController::class,'index'])->name('stage06.settings');
+        Route::post('/stage06/discounts', [Stage06SettingsController::class,'discount'])->name('stage06.discounts.store');
+        Route::post('/stage06/statuses', [Stage06SettingsController::class,'status'])->name('stage06.statuses.store');
+        Route::post('/stage06/mappings', [Stage06SettingsController::class,'mapping'])->name('stage06.mappings.store');
+        Route::post('/stage06/record-settings', [Stage06SettingsController::class,'record'])->name('stage06.records.settings');
+        Route::post('/stage06/field-permissions', [Stage06SettingsController::class,'fieldPermission'])->name('stage06.records.permissions');
+        Route::get('/attendance', [StaffAttendanceController::class,'index'])->name('attendance.index');
+        Route::post('/attendance/start', [StaffAttendanceController::class,'start'])->middleware('throttle:sensitive')->name('attendance.start');
+        Route::post('/attendance/end', [StaffAttendanceController::class,'end'])->middleware('throttle:sensitive')->name('attendance.end');
+        Route::patch('/attendance/{session}', [StaffAttendanceController::class,'correct'])->middleware('throttle:sensitive')->name('attendance.correct');
+        Route::post('/attendance/pay-rules', [StaffAttendanceController::class,'payRule'])->name('attendance.pay-rules');
+        Route::get('/counselor/week', [CounselorWorkspaceController::class,'index'])->name('counselor.week');
+        Route::post('/counselor/leave', [CounselorWorkspaceController::class,'requestLeave'])->name('counselor.leave');
+        Route::post('/counselor/leave/{leave}/review', [CounselorWorkspaceController::class,'reviewLeave'])->name('counselor.leave.review');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');

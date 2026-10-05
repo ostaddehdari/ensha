@@ -36,6 +36,7 @@ class DailyOperationsController extends Controller
     public function checkIn(Request $request, Appointment $appointment, AppointmentBookingService $booking)
     {
         $this->manage($request, $appointment); abort_if(! in_array($appointment->status,['pending','confirmed'],true),422,'این نوبت قابل پذیرش نیست.');
+        $this->requireComplete($appointment,'arrival');
         $booking->transition($appointment, 'arrived', $request->user()->id, 'پذیرش مراجع');
         $appointment->update(['checked_in_at'=>now(),'checked_in_by'=>$request->user()->id]);
         return back()->with('success','مراجع پذیرش شد و وارد صف انتظار گردید.');
@@ -43,6 +44,7 @@ class DailyOperationsController extends Controller
     public function startSession(Request $request, Appointment $appointment, AppointmentBookingService $booking)
     {
         $this->manage($request, $appointment); abort_if($appointment->status !== 'arrived',422,'ابتدا مراجع باید پذیرش شود.');
+        $this->requireComplete($appointment,'session');
         $booking->transition($appointment,'in_session',$request->user()->id,'شروع جلسه از عملیات روزانه'); $appointment->update(['session_started_at'=>now()]);
         return back()->with('success','جلسه شروع شد.');
     }
@@ -71,11 +73,9 @@ class DailyOperationsController extends Controller
         $this->manage($request,$appointment); $data=$request->validate(['slot_id'=>'required|integer|exists:appointment_slots,id','reason'=>'nullable|string|max:1000']);
         abort_if(in_array($appointment->status,['completed','cancelled','no_show'],true),422,'این نوبت قابل جابه‌جایی نیست.');
         $slot=AppointmentSlot::findOrFail($data['slot_id']); abort_unless($slot->centre_id === $appointment->centre_id,403);
-        $new=$booking->book($slot->id,$appointment->client_id,$appointment->case_id,$request->user()->id,'جابجایی از نوبت '.$appointment->appointment_number);
-        if ($appointment->status === 'pending') $booking->transition($appointment,'confirmed',$request->user()->id,'تأیید سیستمی پیش از جابه‌جایی');
-        $booking->transition($appointment->fresh(),'cancelled',$request->user()->id,'جابجا شد: '.($data['reason'] ?? ''));
-        AppointmentReschedule::create(['centre_id'=>$appointment->centre_id,'from_appointment_id'=>$appointment->id,'to_appointment_id'=>$new->id,'client_id'=>$appointment->client_id,'reason'=>$data['reason']??null,'changed_by'=>$request->user()->id]);
-        return redirect()->route('appointments.show',$new)->with('success','نوبت با موفقیت جابه‌جا شد.');
+        // Move the existing record; booking a second overlapping record would always violate client conflict checks.
+        app(\App\Services\AppointmentRescheduleService::class)->move($appointment,$slot,$request->user()->id);
+        return redirect()->route('appointments.show',$appointment)->with('success','نوبت با موفقیت جابه‌جا شد.');
     }
     public function storeWaitlist(Request $request)
     {
@@ -98,7 +98,7 @@ class DailyOperationsController extends Controller
     {
         abort_unless($request->user()->hasPermission('appointments.manage'),403); $date=Carbon::parse($request->input('date',now()->toDateString()))->toDateString(); $centreId=(int)$request->user()->centre_id;
         $upcoming=Appointment::visibleTo($request->user())->with('client.user')->whereDate('starts_at',$date)->whereIn('status',['pending','confirmed'])->get();
-        foreach($upcoming as $a){$phone=$a->client?->user?->phone; if(!$phone)continue; SmsMessage::firstOrCreate(['appointment_id'=>$a->id,'type'=>'appointment_reminder'],['centre_id'=>$centreId,'client_id'=>$a->client_id,'phone_number'=>$phone,'body'=>'یادآوری نوبت شما در '.$a->starts_at->format('Y-m-d H:i'),'scheduled_for'=>now(),'status'=>'queued','created_by'=>$request->user()->id]);}
+        foreach($upcoming as $a){$phone=$a->client?->user?->phone; if(!$phone || str_starts_with($phone,'TMP'))continue; SmsMessage::firstOrCreate(['appointment_id'=>$a->id,'type'=>'appointment_reminder'],['centre_id'=>$centreId,'client_id'=>$a->client_id,'phone_number'=>$phone,'body'=>'یادآوری نوبت شما در '.$a->starts_at->format('Y-m-d H:i'),'scheduled_for'=>now(),'status'=>'queued','created_by'=>$request->user()->id]);}
         return back()->with('success','یادآوری‌های امروز در صف ارسال قرار گرفت.');
     }
     public function report(Request $request)
@@ -110,4 +110,10 @@ class DailyOperationsController extends Controller
         return view('operations.report',compact('date','byStatus','calls','sms'));
     }
     private function manage(Request $request, Appointment $appointment): void { abort_unless($request->user()->hasPermission('appointments.manage') && ($request->user()->isSuperAdmin() || $appointment->centre_id === $request->user()->centre_id),403); }
+    private function requireComplete(Appointment $appointment, string $at): void
+    {
+        $required=DB::table('client_record_settings')->where('centre_id',$appointment->centre_id)->value('complete_required_on');
+        if ($required === $at && $appointment->client?->profile_state !== 'complete')
+            throw ValidationException::withMessages(['client'=>'پرونده مراجع باید تکمیل شود.']);
+    }
 }

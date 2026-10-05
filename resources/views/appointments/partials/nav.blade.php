@@ -6,4 +6,7 @@
     @if(auth()->user()->hasPermission('appointments.manage'))<a class="ensha-secondary-btn" href="{{ route('appointments.create') }}">ثبت نوبت</a>@endif
     <a class="ensha-secondary-btn" href="{{ route('appointments.slots.index') }}">اسلات‌های کاری</a>
     @if(auth()->user()->hasPermission('tariffs.view'))<a class="ensha-secondary-btn" href="{{ route('appointments.tariffs.index') }}">تعرفه‌های نسخه‌دار</a>@endif
+    <a class="ensha-secondary-btn" href="{{ route('counselor.week') }}">برنامه هفتگی</a>
+    <a class="ensha-secondary-btn" href="{{ route('attendance.index') }}">حضور کارکنان</a>
+    @if(auth()->user()->hasPermission('discounts.manage'))<a class="ensha-secondary-btn" href="{{ route('stage06.settings') }}">تنظیمات نوبت‌دهی</a>@endif
 </nav>

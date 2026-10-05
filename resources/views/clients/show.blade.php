@@ -1,5 +1,6 @@
 @extends('layouts.app', ['title'=>'پرونده '.$client->client_code])
 @section('content')
+@if($client->profile_state === 'minimal')<div class="ensha-card" role="alert">⚠ پرونده این مراجع ناقص است. <a href="{{ route('stage06.clients.edit',$client) }}">تکمیل پرونده</a></div>@endif
 <div class="ensha-page-heading"><div><span class="ensha-eyebrow">پرونده جامع مراجع</span><h2>{{ $client->user?->display_name }}</h2><p dir="ltr">{{ $client->client_code }} · {{ $client->user?->phone }}</p></div><div class="flex gap-2">@if(auth()->user()->hasPermission('clients.duplicates'))<a class="ensha-secondary-btn" href="{{ route('clients.duplicates') }}">بررسی تکراری‌ها</a>@endif @if(auth()->user()->hasPermission('clients.manage') && !$client->merged_into_id)<a class="ensha-primary-btn" href="{{ route('clients.edit',$client) }}">ویرایش پرونده</a>@endif</div></div>
 @if($client->merged_into_id)<div class="ensha-alert warning">این پرونده در <a href="{{ route('clients.show',$client->mergedInto) }}">{{ $client->mergedInto?->client_code }}</a> ادغام شده و فقط برای سابقه نگهداری می‌شود.</div>@endif
 
