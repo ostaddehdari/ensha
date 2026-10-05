@@ -8,7 +8,11 @@ use App\Http\Controllers\CentreBranchController;
 use App\Http\Controllers\CentreController;
 use App\Http\Controllers\CentreSettingsController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientMergeController;
+use App\Http\Controllers\ClientRecordController;
+use App\Http\Controllers\CaseClinicalController;
 use App\Http\Controllers\CounsellingCaseController;
+use App\Http\Controllers\PrivateFileController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImpersonationController;
@@ -71,6 +75,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
         Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
         Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::get('/client-duplicates', [ClientMergeController::class, 'index'])->name('clients.duplicates');
+        Route::post('/client-merges', [ClientMergeController::class, 'store'])->middleware('throttle:sensitive')->name('clients.merge');
+        Route::post('/clients/{client}/intakes', [ClientRecordController::class, 'storeIntake'])->name('clients.intakes.store');
+        Route::post('/clients/{client}/guardians', [ClientRecordController::class, 'storeGuardian'])->name('clients.guardians.store');
+        Route::delete('/clients/{client}/guardians/{guardian}', [ClientRecordController::class, 'destroyGuardian'])->name('clients.guardians.destroy');
+        Route::post('/clients/{client}/emergency-contacts', [ClientRecordController::class, 'storeEmergencyContact'])->name('clients.emergency-contacts.store');
+        Route::delete('/clients/{client}/emergency-contacts/{contact}', [ClientRecordController::class, 'destroyEmergencyContact'])->name('clients.emergency-contacts.destroy');
+        Route::post('/clients/{client}/consents', [ClientRecordController::class, 'storeConsent'])->name('clients.consents.store');
+        Route::patch('/clients/{client}/consents/{consent}/revoke', [ClientRecordController::class, 'revokeConsent'])->middleware('throttle:sensitive')->name('clients.consents.revoke');
+        Route::post('/clients/{client}/private-files', [PrivateFileController::class, 'store'])->name('clients.private-files.store');
+        Route::get('/private-files/{privateFile}/download', [PrivateFileController::class, 'download'])->name('private-files.download');
+        Route::delete('/private-files/{privateFile}', [PrivateFileController::class, 'destroy'])->middleware('throttle:sensitive')->name('private-files.destroy');
 
         Route::get('/cases', [CounsellingCaseController::class, 'index'])->name('cases.index');
         Route::get('/cases/create', [CounsellingCaseController::class, 'create'])->name('cases.create');
@@ -80,6 +96,11 @@ Route::middleware('auth')->group(function () {
         Route::put('/cases/{case}', [CounsellingCaseController::class, 'update'])->name('cases.update');
         Route::post('/cases/{case}/assignments', [CounsellingCaseController::class, 'assign'])->name('cases.assignments.store');
         Route::delete('/cases/{case}/assignments/{assignment}', [CounsellingCaseController::class, 'unassign'])->name('cases.assignments.destroy');
+        Route::post('/cases/{case}/sessions', [CaseClinicalController::class, 'storeSession'])->name('cases.sessions.store');
+        Route::post('/cases/{case}/sessions/{session}/notes', [CaseClinicalController::class, 'storeNote'])->name('cases.notes.store');
+        Route::put('/cases/{case}/notes/{note}', [CaseClinicalController::class, 'updateNote'])->name('cases.notes.update');
+        Route::patch('/cases/{case}/notes/{note}/finalize', [CaseClinicalController::class, 'finalizeNote'])->middleware('throttle:sensitive')->name('cases.notes.finalize');
+        Route::post('/cases/{case}/notes/{note}/addenda', [CaseClinicalController::class, 'storeAddendum'])->name('cases.notes.addenda.store');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');

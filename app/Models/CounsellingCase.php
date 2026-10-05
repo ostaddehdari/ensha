@@ -28,6 +28,11 @@ class CounsellingCase extends \Illuminate\Database\Eloquent\Model
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function assignments(): HasMany { return $this->hasMany(CaseAssignment::class, 'case_id'); }
     public function statusHistories(): HasMany { return $this->hasMany(CaseStatusHistory::class, 'case_id'); }
+    public function intakes(): HasMany { return $this->hasMany(ClientIntake::class, 'case_id'); }
+    public function consents(): HasMany { return $this->hasMany(ClientConsent::class, 'case_id'); }
+    public function sessions(): HasMany { return $this->hasMany(CounsellingSession::class, 'case_id'); }
+    public function confidentialNotes(): HasMany { return $this->hasMany(ConfidentialNote::class, 'case_id'); }
+    public function privateFiles(): HasMany { return $this->hasMany(PrivateFile::class, 'case_id'); }
 
     public function scopeVisibleTo(Builder $query, User $actor): Builder
     {

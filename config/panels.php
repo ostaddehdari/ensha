@@ -99,6 +99,7 @@ return [
         ['label' => 'کارکنان', 'slug' => 'staff', 'icon' => 'ki-filled ki-profile-user', 'permission' => 'staff.view'],
         ['label' => 'مراجعین', 'slug' => 'clients', 'icon' => 'ki-filled ki-people', 'permission' => 'clients.view'],
         ['label' => 'پرونده‌های مشاوره', 'slug' => 'cases', 'icon' => 'ki-filled ki-folder', 'permission' => 'cases.view'],
+        ['label' => 'تشخیص مراجع تکراری', 'slug' => 'client-duplicates', 'icon' => 'ki-filled ki-search-list', 'permission' => 'clients.duplicates'],
         ['label' => 'شعب مرکز', 'slug' => 'branches', 'icon' => 'ki-filled ki-geolocation', 'permission' => 'branches.view'],
         ['label' => 'تنظیمات مرکز', 'slug' => 'centre-settings', 'icon' => 'ki-filled ki-setting-4', 'permission' => 'centre_settings.view'],
         ['label' => 'ساعات کاری مشاورین', 'slug' => 'work-hours', 'icon' => 'ki-filled ki-calendar-tick', 'permission' => 'schedules.view'],

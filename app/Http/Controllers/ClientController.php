@@ -19,7 +19,7 @@ class ClientController extends Controller
         $this->check($request);
         $actor = $request->user();
         $centreId = $actor->isSuperAdmin() ? $request->integer('centre_id') : (int) $actor->centre_id;
-        $clients = Client::query()->visibleTo($actor)
+        $clients = Client::query()->visibleTo($actor)->whereNull('merged_into_id')
             ->when($centreId, fn (Builder $query) => $query->where('centre_id', $centreId))
             ->with(['user', 'centre', 'externalIdentities'])
             ->when($request->filled('q'), function (Builder $query) use ($request) {
@@ -78,7 +78,15 @@ class ClientController extends Controller
     {
         $this->check($request);
         $this->visible($request, $client);
-        $client->load(['user', 'centre', 'externalIdentities']);
+        $client->load([
+            'user', 'centre', 'externalIdentities', 'cases',
+            'intakes' => fn ($query) => $query->latest('id'),
+            'guardians' => fn ($query) => $query->orderByDesc('is_primary')->latest('id'),
+            'emergencyContacts' => fn ($query) => $query->orderBy('priority'),
+            'consents' => fn ($query) => $query->latest('id'),
+            'privateFiles' => fn ($query) => $query->latest('id'),
+            'mergedInto.user', 'mergedSources.user',
+        ]);
         return view('clients.show', compact('client'));
     }
 
@@ -86,6 +94,7 @@ class ClientController extends Controller
     {
         $this->check($request, true);
         $this->visible($request, $client);
+        abort_if($client->merged_into_id !== null, 409, 'پرونده ادغام‌شده قابل ویرایش نیست.');
         $client->load(['user', 'externalIdentities']);
         $actor = $request->user();
         $centres = $actor->isSuperAdmin() ? Centre::where('is_active', true)->orderBy('name')->get() : Centre::whereKey($actor->centre_id)->get();
@@ -96,6 +105,7 @@ class ClientController extends Controller
     {
         $this->check($request, true);
         $this->visible($request, $client);
+        abort_if($client->merged_into_id !== null, 409, 'پرونده ادغام‌شده قابل ویرایش نیست.');
         $data = $this->validated($request, $client);
         $actor = $request->user();
         $centreId = $actor->isSuperAdmin() ? (int) $data['centre_id'] : (int) $actor->centre_id;

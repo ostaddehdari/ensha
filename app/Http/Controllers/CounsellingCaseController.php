@@ -75,7 +75,17 @@ class CounsellingCaseController extends Controller
     {
         $this->check($request);
         $this->visible($request, $case);
-        $case->load(['client.user', 'centre', 'creator', 'assignments.user', 'statusHistories.changer']);
+        $sessionRelations = ['counselor'];
+        if ($request->user()->hasPermission('notes.view')) {
+            $sessionRelations[] = 'notes.author';
+            $sessionRelations[] = 'notes.finalizer';
+            $sessionRelations[] = 'notes.addenda.author';
+        }
+        $case->load([
+            'client.user', 'centre', 'creator', 'assignments.user', 'statusHistories.changer',
+            'sessions' => fn ($query) => $query->with($sessionRelations)->orderByDesc('session_number'),
+            'privateFiles' => fn ($query) => $query->latest('id'),
+        ]);
         $assignees = $request->user()->hasPermission('cases.assign') ? $this->availableAssignees($request->user(), $case->centre_id) : collect();
         return view('cases.show', compact('case', 'assignees'));
     }

@@ -165,3 +165,54 @@ Artisan::command('ensha:verify-stage02w02', function () {
     $this->info('VERIFY_STAGE02_W02_OK');
     return 0;
 })->purpose('Verify Ensha Stage 02 / Work 02 after deployment');
+
+Artisan::command('ensha:verify-stage02-complete', function () {
+    $errors = [];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.14.0') {
+        $errors[] = 'VERSION باید 0.14.0 باشد.';
+    }
+    $tables = [
+        'clients', 'external_identities', 'cases', 'case_assignments', 'case_status_histories',
+        'client_intakes', 'client_guardians', 'emergency_contacts', 'client_consents',
+        'counselling_sessions', 'confidential_notes', 'note_addenda', 'private_files', 'client_merge_records',
+    ];
+    foreach ($tables as $table) {
+        if (! Schema::hasTable($table)) $errors[] = "جدول {$table} وجود ندارد.";
+    }
+    $columns = [
+        'clients' => ['merged_into_id', 'merged_at', 'merged_by'],
+        'client_intakes' => ['client_id', 'intake_number', 'risk_level', 'status'],
+        'client_guardians' => ['client_id', 'full_name', 'has_legal_authority'],
+        'emergency_contacts' => ['client_id', 'phone', 'priority'],
+        'client_consents' => ['client_id', 'consent_type', 'is_granted', 'revoked_at'],
+        'counselling_sessions' => ['case_id', 'session_number', 'counselor_id', 'status'],
+        'confidential_notes' => ['case_id', 'body', 'status', 'content_hash', 'finalized_at'],
+        'note_addenda' => ['confidential_note_id', 'body', 'content_hash'],
+        'private_files' => ['client_id', 'path', 'sha256', 'classification', 'scan_status'],
+        'client_merge_records' => ['source_client_id', 'target_client_id', 'merge_summary', 'executed_at'],
+    ];
+    foreach ($columns as $table => $requiredColumns) {
+        foreach ($requiredColumns as $column) {
+            if (! Schema::hasColumn($table, $column)) $errors[] = "ستون {$table}.{$column} وجود ندارد.";
+        }
+    }
+    $requiredPermissions = [
+        'clients.view', 'clients.manage', 'cases.view', 'cases.manage', 'cases.assign',
+        'intakes.view', 'intakes.manage', 'sessions.view', 'sessions.manage', 'notes.view', 'notes.manage',
+        'private_files.view', 'private_files.manage', 'clients.duplicates', 'clients.merge',
+    ];
+    if (Schema::hasTable('permissions') && DB::table('permissions')->where('is_active', true)->whereIn('slug', $requiredPermissions)->count() !== count($requiredPermissions)) {
+        $errors[] = 'مجوزهای کامل Stage 02 ثبت نشده‌اند.';
+    }
+    if (Schema::hasTable('permission_role') && Schema::hasTable('roles') && Schema::hasTable('permissions')) {
+        $managerCount = DB::table('permission_role as pr')->join('roles as r', 'r.id', '=', 'pr.role_id')->join('permissions as p', 'p.id', '=', 'pr.permission_id')
+            ->where('r.slug', 'manager')->whereIn('p.slug', $requiredPermissions)->distinct()->count('p.slug');
+        if ($managerCount !== count($requiredPermissions)) $errors[] = 'دسترسی مدیر مرکز برای Stage 02 کامل نیست.';
+    }
+    if ($errors !== []) {
+        foreach ($errors as $error) $this->error($error);
+        return 1;
+    }
+    $this->info('VERIFY_STAGE02_COMPLETE_OK');
+    return 0;
+})->purpose('Verify completed Ensha Stage 02 / v0.14.0');
