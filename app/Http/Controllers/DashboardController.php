@@ -14,6 +14,10 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
+        if ($user->role === 'secretary' && $user->hasPermission('appointments.view')) {
+            return app(SecretaryCalendarController::class)->index($request);
+        }
+
         $centreContext = $user->centre_id ? Centre::query()->withCount(['branches', 'roleAssignments'])->find($user->centre_id) : null;
         $staffAtCentre = fn () => User::query()
             ->where('is_active', true)->where('status', 'active')

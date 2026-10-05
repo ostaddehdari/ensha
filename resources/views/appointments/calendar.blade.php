@@ -1,8 +1,8 @@
-@extends('layouts.app', ['title'=>'اسکجول منشی'])
+@extends('layouts.app', ['title'=>request()->routeIs('dashboard') ? 'داشبورد منشی' : 'اسکجول منشی'])
 @push('head')<link rel="stylesheet" href="{{ asset('css/secretary-calendar.css').'?v=0.18.0' }}"><link rel="stylesheet" href="{{ asset('css/stage06.css').'?v=0.18.0' }}">@endpush
 @section('content')
 @include('appointments.partials.nav')
-<div class="ensha-page-heading"><div><span class="ensha-eyebrow">Stage 06</span><h2>اسکجول منشی</h2><p>برنامهٔ روزانهٔ چندمشاوره و نمایش هفتگی؛ ثبت و جابه‌جایی با تأیید سرور.</p></div><a href="{{ route('attendance.index') }}" class="ensha-secondary-btn">حضور و غیاب</a></div>
+<div class="ensha-page-heading"><div><span class="ensha-eyebrow">Stage 06</span><h2>{{ request()->routeIs('dashboard') ? 'داشبورد منشی و تقویم نوبت‌ها' : 'اسکجول منشی' }}</h2><p>برنامهٔ روزانهٔ چندمشاوره و نمایش هفتگی؛ ثبت و جابه‌جایی با تأیید سرور.</p></div><a href="{{ route('attendance.index') }}" class="ensha-secondary-btn">حضور و غیاب</a></div>
 <section class="ensha-card" id="stage06-scheduler" data-events="{{ route('appointments.calendar.api.events') }}" data-resources="{{ route('appointments.calendar.api.resources') }}" data-slots="{{ route('appointments.calendar.api.available-slots') }}" data-quote="{{ route('appointments.calendar.api.quote') }}" data-save="{{ route('appointments.calendar.api.store') }}" data-move="{{ url('/appointments/calendar/api/events') }}" data-clients="{{ route('stage06.clients.search') }}" data-create-client="{{ route('stage06.clients.quick') }}" data-csrf="{{ csrf_token() }}" data-manage="{{ auth()->user()->hasPermission('appointments.manage') ? '1':'0' }}">
   <div class="secretary-toolbar"><div class="secretary-toolbar-group"><button type="button" data-prev>‹</button><button type="button" data-today>امروز</button><button type="button" data-next>›</button><strong data-title></strong></div>
   <div class="secretary-toolbar-group"><select data-view><option value="day">روز / مشاوران</option><option value="week">هفته</option></select>

@@ -73,6 +73,7 @@
                         elseif (($item['slug'] ?? '') === 'holidays') $href = route('module.holidays');
                         elseif (($item['slug'] ?? '') === 'leaves') $href = route('module.leaves');
                         elseif (($item['slug'] ?? '') === 'rooms') $href = route('module.rooms');
+                        elseif (($item['slug'] ?? '') === 'appointments' && $role === 'secretary') $href = route('appointments.calendar');
                         elseif (in_array(($item['slug'] ?? ''), ['appointments', 'my-appointments', 'my-calendar'], true)) $href = route('appointments.index');
                         elseif (($item['slug'] ?? '') === 'new-appointment') $href = route('appointments.create');
                         elseif (($item['slug'] ?? '') === 'staff') $href = route('staff.index');
