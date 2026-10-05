@@ -240,3 +240,16 @@ Artisan::command('ensha:verify-stage03-complete', function () {
     $this->info('VERIFY_STAGE03_COMPLETE_OK');
     return 0;
 })->purpose('Verify completed Ensha Stage 03 / v0.15.0');
+
+Artisan::command('ensha:verify-stage04-complete', function () {
+    $errors = [];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.16.0') $errors[] = 'VERSION باید 0.16.0 باشد.';
+    if (! Schema::hasTable('calendar_preferences')) $errors[] = 'جدول calendar_preferences وجود ندارد.';
+    foreach (['app/Http/Controllers/SecretaryCalendarController.php', 'resources/views/appointments/calendar.blade.php', 'public/js/secretary-calendar.js', 'public/css/secretary-calendar.css'] as $file) if (! file_exists(base_path($file))) $errors[] = "فایل تقویم وجود ندارد: {$file}";
+    foreach (['appointments.calendar', 'appointments.calendar.api.events', 'appointments.calendar.api.update'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[] = "مسیر {$route} ثبت نشده است.";
+    }
+    if ($errors !== []) { foreach ($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE04_COMPLETE_OK');
+    return 0;
+})->purpose('Verify completed Ensha Stage 04 / v0.16.0');

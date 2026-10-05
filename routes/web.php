@@ -27,6 +27,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AppointmentSlotController;
 use App\Http\Controllers\ServiceTariffController;
 use App\Http\Controllers\ScheduleExceptionController;
+use App\Http\Controllers\SecretaryCalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -107,6 +108,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/cases/{case}/notes/{note}/addenda', [CaseClinicalController::class, 'storeAddendum'])->name('cases.notes.addenda.store');
 
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::get('/appointments/calendar', [SecretaryCalendarController::class, 'index'])->name('appointments.calendar');
+        Route::prefix('/appointments/calendar/api')->name('appointments.calendar.api.')->group(function () {
+            Route::get('/resources', [SecretaryCalendarController::class, 'resources'])->name('resources');
+            Route::get('/events', [SecretaryCalendarController::class, 'events'])->name('events');
+            Route::get('/available-slots', [SecretaryCalendarController::class, 'availableSlots'])->name('available-slots');
+            Route::post('/events', [SecretaryCalendarController::class, 'store'])->middleware('throttle:sensitive')->name('store');
+            Route::patch('/events/{appointment}', [SecretaryCalendarController::class, 'updateEvent'])->middleware('throttle:sensitive')->name('update');
+        });
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointments', [AppointmentController::class, 'store'])->middleware('throttle:sensitive')->name('appointments.store');
         Route::get('/appointments/slots', [AppointmentSlotController::class, 'index'])->name('appointments.slots.index');

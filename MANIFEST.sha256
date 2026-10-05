@@ -9,6 +9,7 @@ d75be1e51e82127bc3fd07d5804fef181eec252bcfa49b8b8347a7d556123406  ./CHANGELOG-v0
 c5f5c1f5b47f14affe573ae5b99498baea5ee31738e4556c5926f48023046826  ./CHANGELOG-v0.13.0.fa.md
 0008f2eafe2a0e6e0707dbd55b9f5f18520001fa57d638e3b1c1a98930baf4f6  ./CHANGELOG-v0.14.0.fa.md
 aee1686d75075d495a298f4155e8d38a0e46a8b4620ce4e4980328d8a92b59e3  ./CHANGELOG-v0.15.0.fa.md
+59dc9ef6218251789e670e609b62e34e61b223c5c0dfafe2f929c1bdee9ec9b6  ./CHANGELOG-v0.16.0.fa.md
 f1e7d1174f81fa6008a1271c4331730eb91f5278a0cdb17cc0ffd32326b803ee  ./CHANGELOG-v0.4.fa.md
 c23ada00454b4f55f3a306261ecc2fe6d68c237c1b1f35b2a73b4e7e121b6941  ./CHANGELOG-v0.5.fa.md
 21599872389b3623d0a1dad61a23299fac96649cebce798e861770b4dd34aed3  ./CHANGELOG-v0.6.1.fa.md
@@ -22,6 +23,7 @@ f225523abee76f2c7a4f2f5e91b32c23ee35cfe3d4110d3cbd9aca9901e5f295  ./CHANGELOG.fa
 606cf5ad1b758936a1b465e9cc39e3948fdef63b6ed3959eae3c973cbd00f19e  ./INSTALL-STAGE02-COMPLETE.fa.md
 56ab96ec2ae2eddc79e1f9d6698104a0634f71adb0ca69f35b5cef5639d09bb3  ./INSTALL-STAGE02-W02.fa.md
 338d4df02c07e5a2e30f76108ccc4f23451e140b093019814b67a5916cf00b59  ./INSTALL-STAGE03-COMPLETE.fa.md
+227684d431c1a7309a1fa37dc72a77b5e5ec26412d3c553db8fafdfae2c375e2  ./INSTALL-STAGE04-COMPLETE.fa.md
 614ed6903eb6dbfe3537a24ee05bbf1a96312eea858e535e3925987e1a8cdbfc  ./README-v0.10.1.fa.md
 41897cff0261dd9dbb4a329a677dde36040bcd1b0768d22634d6e086ceca5e48  ./README-v0.10.2.fa.md
 075ee55fbd8ab52000356f9d4df1ce2ef26bac2cabb7dd019a642f4ec0ed5ea9  ./README-v0.10.4.fa.md
@@ -30,6 +32,7 @@ e65b037c486717967a429f73da4fda34341202ad394fe0d9ced73e0faa68c044  ./README-v0.10
 67897624d044ec633c14b886c50df0039fc206d5475a5545581f09539b344c60  ./README-v0.13.0.fa.md
 c0acff093d7831ce9b08718452195b6d1f81d509db6c0a52e688d1ac5cfd60a9  ./README-v0.14.0.fa.md
 23b00107d1eed5f1980aa35cd5c8174de3ba150b310ae6425a82a39d078e35c6  ./README-v0.15.0.fa.md
+9165720ee376c1eca13b330aa8a2891125d60bdf978ff18ea22316ea630b0190  ./README-v0.16.0.fa.md
 e23941efbcc61eb0ad763867e9ff9fd4a61c54499064f47409f603f0e96bcc60  ./README-v0.4.fa.md
 374981b38ece8face247b7ac20d99e87c7da43fed9cb8d01af0b25a35a5b71b6  ./README-v0.5.fa.md
 c6e5eedc3f1e96a731561b973718e8c8bd1802eab3a61f54039e398fb7faf737  ./README-v0.6.1.fa.md
@@ -38,7 +41,7 @@ c6e5eedc3f1e96a731561b973718e8c8bd1802eab3a61f54039e398fb7faf737  ./README-v0.6.
 ea1260a17c27d194b0289dceabbd40843ddaa1b040109c6c44eecbf2f94d3901  ./README-v0.8.fa.md
 03fdf15c9cd0f3914aece2a5d808c1a61e014b1cb33ba5e49a457186fa0f87ae  ./README-v0.9.fa.md
 4a2d142382779370bb4cb8dc418fd99531703bce254505e83e545ce9e7d42e16  ./README.fa.md
-f8405a7330c287028d470c3ee3506f878f1ad85ed79c1d1adc19df2ff7398915  ./VERSION
+aa037454b5e8320521a32b278a3f4aff05fc79009ab5503f5d4a1b9a33b38c47  ./VERSION
 fd09142750fd98e47f8b474b867f69912d3dbebb206d7e6cab7a40f5048ce6ba  ./app/Http/Controllers/AccountPasswordController.php
 ad2a806b73731846a8d73e449a3a016d01c8c522de889e2b4c3e751c8a4d2048  ./app/Http/Controllers/ActiveRoleController.php
 8dc0e16e8dfb3967c884382fee636ba7a23b414790d9c02ecfd54b17c9ca3fae  ./app/Http/Controllers/AppointmentController.php
@@ -61,6 +64,7 @@ c8003e8880a05813b8deb2e5081fbc6e99773675596a95186721fa32a3b1ce4c  ./app/Http/Con
 63b455169f94fd1cb784024fc1a055b49232bd44dd1757ee6fb012a36cc9ee4e  ./app/Http/Controllers/ProfileFieldController.php
 ada878d89dd8891594e7d8f037f064ce653635bb6f6540af9579d4aa3ade06ea  ./app/Http/Controllers/RoleController.php
 673b915fb90d94aa51aacaa55a158b68f63c5bd2d556f9dc31e5b025eac13e05  ./app/Http/Controllers/ScheduleExceptionController.php
+9d65c954609eb51577a191538e59e695f4061c30da0f334b954dc7781b0ca6d8  ./app/Http/Controllers/SecretaryCalendarController.php
 0d5e8af0efb24a8b577b72bfeb73137eb1e27d959538f19a0b3d23cc67c8433f  ./app/Http/Controllers/SelfProfileController.php
 28c4d3e33724d74d734d2a7fe72e0ee927d9981c52c141f6a8fd33dda8b8538a  ./app/Http/Controllers/ServiceTariffController.php
 a38f9bfd553a97154e8a9836f33640292aac961b4f52d812dca13b0fea5af354  ./app/Http/Controllers/StaffController.php
@@ -163,6 +167,7 @@ b9a706c214b67e8d7f9157cc63e34996c6c99f05ec3fffb5d003908b66268711  ./database/mig
 97cbf874dce4115753eb5496bf2d4cea6b380d9ac19a7d826e2d9c94e6a82527  ./database/migrations/2026_10_04_000013_stage02_cases_assignments_status.php
 252d5697394b7d1bff99c46772bcf1dfa894f5ac0bafb6c8a59cc598b9934b77  ./database/migrations/2026_10_04_000014_complete_stage02_client_records.php
 322613c4b8b6d1d20c1ee4f769a0d41a6a5635ce62dfa282f3223ef0986ccfd4  ./database/migrations/2026_10_05_000015_complete_stage03_appointment_engine.php
+f315e58c08178518f03701718e5772025e8fb2eb2ef50dc099244a85cdc3a2d0  ./database/migrations/2026_10_05_000016_stage04_secretary_calendar.php
 c51e5786c8e6060ce7733340cc0a4f2e63b08a437c237242957a2beb958b9a1c  ./database/seeders/DatabaseSeeder.php
 44f162848ff48a1632ec19ea5ced5166fd35cfd4486e84857b8dc347e1284f09  ./deploy/database-config.php
 fe69931a698ab51d9456592b29691fadab3dd8f9163fcb7d956ab3d34ea0a7e7  ./deploy/install.sh
@@ -171,6 +176,7 @@ fe69931a698ab51d9456592b29691fadab3dd8f9163fcb7d956ab3d34ea0a7e7  ./deploy/insta
 ac9e4c08f03a920bd3ba3a501aab4f1aafd5b36489ca11585d42eae6ab584dae  ./deploy/rollback-v0.13.0.sh
 ceb1200279c0cc884367e646605195af8b5774e684f2e742fd3f31b833acb8c2  ./deploy/rollback-v0.14.0.sh
 f208137d158c52d33a7f7b7d9e562343602df454e3b88f7ba5f976216b7635e4  ./deploy/rollback-v0.15.0.sh
+3d03f274255417eeed23ad52f28301d7503d8be33f6aa897c55bd11133bdeeee  ./deploy/rollback-v0.16.0.sh
 695a43a31bbd74484f938b2ad47e0cf8b81f72e5cc9e5a8c207b6b2b519b665d  ./deploy/update-ui.sh
 051c57cc4cb7b41d2d08d8693e5c8bde457ff00a3d71a99883d982e28bb204e6  ./deploy/update-v0.10.1.sh
 61552e2264cf11c0dce34aed366d1720571dbc07b442efeb71e83c06ea1e4ea3  ./deploy/update-v0.10.2.sh
@@ -181,6 +187,7 @@ ab387c44a4e2bf3ff16549cabb8a2e945dcb75c3b9c51492e8fad32a832e663d  ./deploy/updat
 cd9fa6b1d9fe790a16758263cd3dbd2ab720ce272140893b1964d147dd683280  ./deploy/update-v0.13.0.sh
 08ac171ace35a04260c3379621bc7a1b87f462dc1681cf97b292c88a9d684a05  ./deploy/update-v0.14.0.sh
 890ac10d8e736b3dbffdbdfbb1d32d016cc1665cc74c0a48b385f244219abced  ./deploy/update-v0.15.0.sh
+bbd024cdb9a450307966c8adb367633e69c7bc104abdeac1ceb4c0f0e2398dfa  ./deploy/update-v0.16.0.sh
 1dabf37a6727568ec0b8c67d7f64b8a99007dc1cc3261152edf07c57859451aa  ./deploy/update-v0.3.sh
 8f812753b1101838cb1b1d9cde08de4d25ea1dfa96fa3852b49fa1548cb93d15  ./deploy/update-v0.4.sh
 6e2a1692f6f33587a171540549e9685cc4ce2b2e9aff6cad8e8e26539a6eee96  ./deploy/update-v0.5.sh
@@ -194,6 +201,7 @@ b4025091b51810021d515dac08aa112f74c4b834830aa04f5ff114544d8a366b  ./install-stag
 5bc0258b432582365e329c8934a24089503eee4d871f61b3411a1097478597eb  ./install-stage02.sh
 21b3100722450b7df51fce1e536d20db567d56cddc072274935b93da2242bd92  ./install-stage02w02.sh
 cd1aaee7fc685c1f975a8824e143ae984252104fc3ac73f0c27a6c3c773ccb86  ./install-stage03-complete.sh
+72d4692cdf20b03b9d337ba7711e0353c0be9f86ec1067cf7ad799102e367c98  ./install-stage04-complete.sh
 37c046b3d5f72825428bdbb8ba7b62330f20b1b812442aca094393d2bc06033e  ./nginx/ensha-location.conf
 6c06f5271d50036d0c751b4274fab8d88ad09a866608100239da1c654c083dc1  ./phpunit.xml
 f41b82dc7eeb173ad0ff5166c40eeaa40b9be43f2922b327992b2bc4ad0cb35e  ./public/assets/css/core.bundle.css
@@ -226,16 +234,19 @@ cd18a6a769f9d60b1ba91ff1d32d6e50e3eaca3e1f42fc9b91b0e5811b27d707  ./public/asset
 430b9ff651c3995cf54a7e1695c1811d2190bcd57a88694c85d75e85b05c926c  ./public/css/ensha-metronic.css
 2b8e0bcd0bb2f1c97deaef761f14f017b2a2bd83f7576dafe4d4da417a945e7f  ./public/css/ensha.css
 834d8be341a4c2e5c8347d87d14bec01afa1b5bbe3e74b78fa989006e15277d8  ./public/css/profile-builder.css
+4ecb8802b88542bddf4909f4a0722be57eb6bfb18cd11478d0d1e44a6130db52  ./public/css/secretary-calendar.css
 2b9ff234bbf57c71a0f66f201d197b570f7d3410f78081388eb1f9e897f5b2c4  ./public/index.php
 bc68b005130243f31d6a74e566925a3ef0d795b7d9d65920ae13c2267f2fc00a  ./public/js/ensha.js
 af18089ad6ae817a379746e8f49e6173ea806c90b20475db648f8bc2267a44c5  ./public/js/profile-builder.js
 bcb3c7577138d190b87e216f488cef9c52e1d106fa22d25ba939afe3c28cda84  ./public/js/profile-fields-user.js
+626d738383f96155448e75ecc27ef6feaf8bf80d53fa2b2e31afa599be9a5ae6  ./public/js/secretary-calendar.js
 1f0d6c97705b2498326312b9789b978c9b8da48979814ccca7981bc4eb1686ca  ./resources/views/account/password.blade.php
 0106de03aefdae1bb1ad33c0f2cda7b9b1e31413f7dc09d79d9da4a30d3996a1  ./resources/views/account/profile.blade.php
 e1b6950fabc53f333db98f4d2654c09e94e9b3607b62582e05197ba81b555fa0  ./resources/views/account/roles.blade.php
+d1da7ca6267cbabf41b8b153467afc4719d81d99e755686760f5660a08ba0365  ./resources/views/appointments/calendar.blade.php
 fe166cc910baef05544f1635e84bf26c24bb6c0f3388f73a1c138996ec87f05c  ./resources/views/appointments/create.blade.php
 03796d32114179d5c40fff136077ca5670fe836840f9bf559f6bdf472695e3c1  ./resources/views/appointments/index.blade.php
-0e74eb67d79bd046cbfe505c07f335e50738dec9c59bd59e3635c83348d67c44  ./resources/views/appointments/partials/nav.blade.php
+36c644aabf69ca8b908ccbd6892af3bd5c92de31bc0ada849340635d918aac83  ./resources/views/appointments/partials/nav.blade.php
 daebebb3e7759e95d10b8f6e77b03162c847a9e8f123e05500e4f891702986e7  ./resources/views/appointments/show.blade.php
 c0b813a6f766a6170354cf29f494f983d302f66082e23bfa9516fd99720b5edb  ./resources/views/appointments/slots.blade.php
 8f0d04327fc6cedb8523d068081f7e57d6de13636f39aa50a9ac0a97c4b1b22a  ./resources/views/appointments/tariffs.blade.php
@@ -281,8 +292,8 @@ e0e7c97e98107ae489723f849359356f27d5dd5506d770719ce9f2aba1d79242  ./resources/vi
 0dc52b027bf2019a3c43a66bed4c04afcee255f22111d9c21f7f9317058c91de  ./resources/views/users/partials/profile-fields.blade.php
 4274a54950bce38307b2b71164951173dd0d21ce870d9ad762715620f09e3414  ./resources/views/users/show.blade.php
 31d9d6152a3dc849abb1127aa7d50ab52a14414207a0fb9a7601f4a6150aeb9c  ./resources/views/users/trash.blade.php
-f594e1944bd04b038fd513f624b1a48f339e9743fc08325e99af898868f2b4c7  ./routes/console.php
-65d6a9fba774aadce861cce6e8f37fdee4f15db963776f4978363ee5a6196787  ./routes/web.php
+dde67d87576fe4af76622ba1350bf4d7a784c5f69913044141030dba736e0d5d  ./routes/console.php
+0988baa924abcf4a10c89a0cf46b8e8267d245987ab608861e49cd527ca0afd0  ./routes/web.php
 8e3bead4285f13cc630a55dc1b37237f0cc71444f7661671364edd48e08eacf4  ./systemd/ensha-web.service
 13c0a3a4871b6e3da33325d2b935ef0d281d2c806a763d7401b37eb0ecd3ee1e  ./tests/Feature/AccessControlTest.php
 b39d0dfb6a862be161aa6005f9dc98bba43288b145a687524153fd67e9531047  ./tests/Feature/ProfileBuilderTest.php
@@ -302,3 +313,4 @@ c3abc0e71b0fb29336d1bba9e68ffd1b4536921a3736c410c3575f82de1165cd  ./tests/Featur
 d6cb7ff5f6bb19aaeddaa5aad8b18097834c6bba879eca600866896fce579e21  ./verify-stage02.sh
 f3c93fef6f4470ccd724893e150dd4ce1e7558429197decc3d0cef1b57c5bdc4  ./verify-stage02w02.sh
 5e4748072871435a1535d1fc38f2cff538e83a4199b13e1fd11bbd2ecc56eca4  ./verify-stage03-complete.sh
+6830d9eaae05f9bb047998a59ded0edd3e3ec529f4aecaec3f8d6f63dd1f93c4  ./verify-stage04-complete.sh
