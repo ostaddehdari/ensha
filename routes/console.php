@@ -265,7 +265,7 @@ Artisan::command('ensha:verify-stage05-complete', function () {
 
 Artisan::command('ensha:verify-stage06-complete', function () {
     $errors=[];
-    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.18.0') $errors[]='VERSION باید 0.18.0 باشد.';
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.18.1') $errors[]='VERSION باید 0.18.1 باشد.';
     foreach (['discounts','appointment_statuses','counselor_leave_requests','staff_work_sessions','staff_work_session_audits',
         'staff_pay_rules','client_record_settings','client_profile_field_permissions','appointment_waitlists'] as $table) {
         if (! Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
@@ -283,4 +283,4 @@ Artisan::command('ensha:verify-stage06-complete', function () {
     if (Schema::hasTable('appointments') && DB::table('appointments')->whereNull('public_id')->exists()) $errors[]='نوبت بدون شناسه عمومی وجود دارد.';
     if ($errors) { foreach ($errors as $error) $this->error($error); return 1; }
     $this->info('VERIFY_STAGE06_COMPLETE_OK'); return 0;
-})->purpose('Verify Stage 06 scheduling, records, leave and attendance / v0.18.0');
+})->purpose('Verify Stage 06 scheduling, records, leave and attendance / v0.18.1');
