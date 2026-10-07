@@ -85,27 +85,17 @@
     } catch(e) {error.textContent=e.message; console.error('Ensha calendar:',e);}
     finally {loading.hidden=true;}
   }
-  async function slots() {
-    try {
-      const r=range(), counselor=$('[data-counselor]',drawer).value, topic=$('[data-topic]',drawer).value;
-      const values=await json(query(root.dataset.slots,{...r,counselor_id:counselor,topic_id:topic}));
-      const select=$('[data-slot]',drawer); select.replaceChildren(new Option('انتخاب زمان',''));
-      values.forEach(slot=>select.add(new Option(slot.label,slot.id)));
-      const match=values.find(slot=>state.start && local(slot.start)===state.start.slice(0,19) && (!state.counselor || String(slot.counselor_id)===String(state.counselor)));
-      if(match) {select.value=match.id;quote();}
-      if(!values.length) $('[data-drawer-error]',drawer).textContent='زمان آزادی برای این انتخاب وجود ندارد. روز یا مشاور دیگری را انتخاب کنید.';
-    }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}
-  }
   function open(start=null,counselor=null) {
     state.start=start; state.counselor=counselor;
     form.reset();form.elements.client_id.value='';drawer.hidden=false;
     $('[data-results]',drawer).replaceChildren();$('[data-client-label]',drawer).textContent='';$('[data-drawer-error]',drawer).textContent='';
     $('[data-picked]',drawer).textContent=start ? `زمان انتخابی: ${longDate.format(new Date(start))}، ساعت ${start.slice(11,16)}` : 'زمان مورد نظر را انتخاب کنید.';
     if(counselor) $('[data-counselor]',drawer).value=String(counselor);
-    slots();
+    form.elements.appointment_date.value = start ? start.slice(0,10) : ymd(state.date);
+    form.elements.start_time.value = start ? start.slice(11,16) : "09:00";
   }
   drawer.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{drawer.hidden=true;});
-  $('[data-counselor]',drawer).onchange=slots;$('[data-topic]',drawer).onchange=slots;
+
   let debounce;
   $('[data-search]',drawer).oninput=e=>{clearTimeout(debounce);const q=e.target.value.trim();if(q.length<2)return;debounce=setTimeout(async()=>{
     try {const rows=await json(query(root.dataset.clients,{q}));const out=$('[data-results]',drawer);out.replaceChildren();out.className='stage06-suggestions';
@@ -116,11 +106,8 @@
   $('[data-client-create]',drawer).onclick=async()=>{try {const body=new FormData();['first_name','last_name','phone','national_id'].forEach(k=>body.set(k,form.elements[k].value));
       const row=await json(root.dataset.createClient,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});form.elements.client_id.value=row.id;$('[data-client-label]',drawer).textContent=row.text;$('[data-results]',drawer).replaceChildren();
     }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}};
-  async function quote(){if(!form.elements.slot_id.value)return;try{const q=await json(query(root.dataset.quote,{slot_id:form.elements.slot_id.value,discount_id:form.elements.discount_id.value,paid_amount:form.elements.paid_amount.value||0}));
-      $('[data-pricing]',drawer).textContent=`مدت ${q.duration_minutes} دقیقه · پایه ${q.base_price.toLocaleString('fa-IR')} · تخفیف ${q.discount_value_snapshot.toLocaleString('fa-IR')} · نهایی ${q.final_price.toLocaleString('fa-IR')} · مانده ${q.balance_amount.toLocaleString('fa-IR')}`;
-    }catch(e){$('[data-pricing]',drawer).textContent=e.message;}}
-  ['slot_id','discount_id','paid_amount'].forEach(key=>form.elements[key].addEventListener('change',quote));
   form.onsubmit=async e=>{e.preventDefault();try {const body=new FormData(form);['first_name','last_name','phone','national_id'].forEach(key=>body.delete(key));
+      $('[data-drawer-error]',drawer).textContent='';
       await json(root.dataset.save,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});drawer.hidden=true;await load();
     }catch(err){$('[data-drawer-error]',drawer).textContent=err.message;}};
   $('[data-view]').onchange=e=>{state.view=e.target.value;load();};

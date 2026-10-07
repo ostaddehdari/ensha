@@ -90,16 +90,69 @@ class SecretaryCalendarController extends Controller
     public function store(Request $request, AppointmentBookingService $booking)
     {
         abort_unless($request->user()->hasPermission('appointments.manage'), 403);
-        $data = $request->validate(['slot_id' => 'required|integer|exists:appointment_slots,id', 'client_id' => 'required|integer|exists:clients,id', 'case_id' => 'nullable|integer|exists:cases,id', 'notes' => 'nullable|string|max:2000',
-            'discount_id'=>'nullable|integer','paid_amount'=>'nullable|integer|min:0','payment_note'=>'nullable|string|max:2000']);
-        $slot = AppointmentSlot::findOrFail($data['slot_id']); $client = Client::findOrFail($data['client_id']);
-        abort_unless($request->user()->isSuperAdmin() || ($slot->centre_id === $request->user()->centre_id && $client->centre_id === $request->user()->centre_id), 403);
-        if (! empty($data['case_id'])) abort_unless($client->cases()->whereKey($data['case_id'])->exists(),422);
+        $data = $request->validate([
+            'appointment_date' => 'required|date_format:Y-m-d', 'start_time' => 'required|date_format:H:i',
+            'duration_minutes' => 'required|integer|min:15|max:240',
+            'counselor_id' => 'required|integer|exists:users,id', 'topic_id' => 'required|integer|exists:service_topics,id',
+            'mode' => 'required|in:in_person,video,phone', 'client_id' => 'required|integer|exists:clients,id',
+            'case_id' => 'nullable|integer|exists:cases,id', 'notes' => 'nullable|string|max:2000',
+            'discount_id' => 'nullable|integer', 'paid_amount' => 'nullable|integer|min:0',
+            'payment_note' => 'nullable|string|max:2000',
+        ]);
+        $centreId = (int) $request->user()->centre_id;
+        $client = Client::where('centre_id', $centreId)->findOrFail($data['client_id']);
+        abort_unless($this->counselors($centreId)->contains('id', (int) $data['counselor_id']), 403);
+        $topic = ServiceTopic::whereHas('category', fn ($q) => $q->where('centre_id', $centreId))
+            ->where('is_active', true)->findOrFail($data['topic_id']);
+        if (! empty($data['case_id'])) abort_unless($client->cases()->whereKey($data['case_id'])->exists(), 422);
+        $start = Carbon::createFromFormat('!Y-m-d H:i', $data['appointment_date'].' '.$data['start_time']);
+        $end = $start->copy()->addMinutes((int) $data['duration_minutes']);
+        if ($start->isPast() || $end->toDateString() !== $start->toDateString()) {
+            throw ValidationException::withMessages(['start_time' => 'زمان باید در آینده و در همان روز باشد.']);
+        }
+        // One lock per counselor serializes manual bookings, including overlapping starts.
         try {
-            $appointment = $booking->book($slot->id, $client->id, $data['case_id'] ?? null, $request->user()->id, $data['notes'] ?? null,
-                ['source'=>'secretary','discount_id'=>$data['discount_id']??null,'paid_amount'=>$data['paid_amount']??0,'payment_note'=>$data['payment_note']??null]);
+            $appointment = \Illuminate\Support\Facades\Cache::store(config('appointments.lock_store', 'redis'))
+                ->lock('ensha:manual-counselor:'.$data['counselor_id'], 30)->block(8, function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
+                    return DB::transaction(function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
+                        $existing = AppointmentSlot::where('counselor_id', $data['counselor_id'])
+                            ->where('topic_id', $topic->id)->where('starts_at', $start)
+                            ->where('mode', $data['mode'])->lockForUpdate()->first();
+                        if ($existing) {
+                            if (! $existing->ends_at->equalTo($end) || $existing->status !== 'available') {
+                                throw ValidationException::withMessages(['start_time' => 'این زمان قبلاً ثبت شده است.']);
+                            }
+                            $slot = $existing;
+                        } else {
+                            $roomId = null;
+                            if ($data['mode'] === 'in_person' && $topic->requires_room) {
+                                $roomIds = DB::table('centre_rooms')->where('centre_id', $centreId)->where('is_active', true)->pluck('id');
+                                foreach ($roomIds as $candidate) {
+                                    if (! Appointment::where('room_id', $candidate)->whereNotIn('status', ['cancelled','no_show'])
+                                        ->where('starts_at', '<', $end)->where('ends_at', '>', $start)->exists()) {
+                                        $roomId = $candidate; break;
+                                    }
+                                }
+                                if (! $roomId) throw ValidationException::withMessages(['start_time' => 'اتاق آزادی برای این زمان وجود ندارد.']);
+                            }
+                            $slot = AppointmentSlot::create([
+                                'centre_id' => $centreId, 'topic_id' => $topic->id, 'counselor_id' => $data['counselor_id'],
+                                'room_id' => $roomId, 'slot_date' => $start->toDateString(), 'starts_at' => $start,
+                                'ends_at' => $end, 'mode' => $data['mode'], 'capacity' => 1, 'booked_count' => 0,
+                                'status' => 'available', 'source' => 'secretary_manual',
+                            ]);
+                        }
+                        return $booking->book($slot->id, $client->id, $data['case_id'] ?? null, $request->user()->id,
+                            $data['notes'] ?? null, ['source' => 'secretary', 'discount_id' => $data['discount_id'] ?? null,
+                                'paid_amount' => $data['paid_amount'] ?? 0, 'payment_note' => $data['payment_note'] ?? null]);
+                    });
+                });
             return response()->json($this->event($appointment->load(['client.user', 'topic', 'counselor', 'slot.room'])), 201);
-        } catch (ValidationException $e) { return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 409); }
+        } catch (ValidationException $e) {
+            return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 409);
+        } catch (\Illuminate\Contracts\Cache\LockTimeoutException $e) {
+            return response()->json(['message' => 'ثبت نوبت هم‌زمان در جریان است؛ دوباره تلاش کنید.'], 409);
+        }
     }
 
     public function updateEvent(Request $request, Appointment $appointment)
