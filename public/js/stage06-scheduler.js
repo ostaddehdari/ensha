@@ -97,14 +97,15 @@
     } catch(e) {error.textContent=e.message; console.error('Ensha calendar:',e);}
     finally {loading.hidden=true;}
   }
-  function open(start=null,counselor=null) {
+  function open(start,counselor=null) {
+    const selected = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(start || "");
+    if (!selected) {error.textContent="زمان انتخاب‌شده از تقویم معتبر نیست؛ دوباره کلیک کنید.";return;}
     state.start=start; state.counselor=counselor;
     form.reset();form.elements.client_id.value='';drawer.hidden=false;
     $('[data-results]',drawer).replaceChildren();$('[data-client-label]',drawer).textContent='';$('[data-drawer-error]',drawer).textContent='';
-    $('[data-picked]',drawer).textContent=start ? `زمان انتخابی: ${longDate.format(new Date(start))}، ساعت ${start.slice(11,16)}` : 'زمان مورد نظر را انتخاب کنید.';
     if(counselor) $('[data-counselor]',drawer).value=String(counselor);
-    form.elements.appointment_date.value = start ? start.slice(0,10) : ymd(state.date);
-    form.elements.start_time.value = start ? start.slice(11,16) : "09:00";
+    form.elements.appointment_date.value = selected[1];
+    form.elements.start_time.value = selected[2];
   }
   drawer.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{drawer.hidden=true;});
 
@@ -123,7 +124,7 @@
       $('[data-results]',drawer).replaceChildren();
     });
   });
-  form.onsubmit=async e=>{e.preventDefault();try {if (!form.elements.client_id.value && (!form.elements.first_name.value.trim() || !form.elements.last_name.value.trim())) throw new Error('مراجع موجود را از نتایج انتخاب کنید، یا نام و نام خانوادگی مراجع جدید را وارد کنید.');const body=new FormData(form);
+  form.onsubmit=async e=>{e.preventDefault();try {if (!form.elements.appointment_date.value || !form.elements.start_time.value) throw new Error('زمان نوبت را از تقویم انتخاب کنید.');if (!form.elements.client_id.value && (!form.elements.first_name.value.trim() || !form.elements.last_name.value.trim())) throw new Error('مراجع موجود را از نتایج انتخاب کنید، یا نام و نام خانوادگی مراجع جدید را وارد کنید.');const body=new FormData(form);
       $('[data-drawer-error]',drawer).textContent='';
       const submit=form.querySelector('[type=submit]');submit.disabled=true;
       try { await json(root.dataset.save,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});drawer.hidden=true;await load(); }
