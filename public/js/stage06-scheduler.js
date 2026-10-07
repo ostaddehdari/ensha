@@ -21,7 +21,19 @@
   const query = (url, params) => `${url}?${new URLSearchParams(params)}`;
   const parts = date => Object.fromEntries(persian.formatToParts(date).filter(p => ['year','month','day'].includes(p.type)).map(p => [p.type, Number(p.value)]));
   async function json(url, options = {}) {
-    const response = await fetch(url, {headers:{Accept:'application/json', ...options.headers}, ...options});
+    const response = await fetch(url, {
+      ...options,
+      headers: { ...options.headers, Accept: 'application/json' },
+      credentials: 'same-origin',
+      redirect: 'manual'
+    });
+    if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 303) {
+      throw new Error('درخواست به صفحهٔ دیگری هدایت شد. صفحه را تازه کنید و دوباره وارد حساب شوید.');
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error(`پاسخ سرور JSON نیست (HTTP ${response.status}). صفحه را تازه کنید؛ اگر تکرار شد، گزارش خطای سرور را بررسی کنید.`);
+    }
     const value = await response.json();
     if (!response.ok) throw new Error(Object.values(value.errors || {}).flat().join(' ') || value.message || 'خطا در درخواست');
     return value;
@@ -97,18 +109,20 @@
   drawer.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{drawer.hidden=true;});
 
   let debounce;
-  $('[data-search]',drawer).oninput=e=>{clearTimeout(debounce);const q=e.target.value.trim();if(q.length<2)return;debounce=setTimeout(async()=>{
+  $('[data-search]',drawer).oninput=e=>{clearTimeout(debounce);form.elements.client_id.value='';$('[data-client-label]',drawer).textContent='';const q=e.target.value.trim();if(q.length<2){$('[data-results]',drawer).replaceChildren();return;}debounce=setTimeout(async()=>{
     try {const rows=await json(query(root.dataset.clients,{q}));const out=$('[data-results]',drawer);out.replaceChildren();out.className='stage06-suggestions';
       rows.forEach(row=>{const button=document.createElement('button');button.type='button';button.textContent=row.text+(row.profile_state==='minimal'?' · پرونده ناقص':'');
-        button.onclick=()=>{form.elements.client_id.value=row.id;$('[data-client-label]',drawer).textContent=row.text;out.replaceChildren();};out.append(button);});
+        button.onclick=()=>{form.elements.client_id.value=row.id;$('[data-search]',drawer).value=row.text;$('[data-client-label]',drawer).textContent=`مراجع انتخاب‌شده: ${row.text}`;out.replaceChildren();$('[data-drawer-error]',drawer).textContent='';};out.append(button);});
       if(!rows.length)out.textContent='مراجعی یافت نشد؛ از ثبت سریع استفاده کنید.';
     }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}},250);};
   $('[data-client-create]',drawer).onclick=async()=>{try {const body=new FormData();['first_name','last_name','phone','national_id'].forEach(k=>body.set(k,form.elements[k].value));
-      const row=await json(root.dataset.createClient,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});form.elements.client_id.value=row.id;$('[data-client-label]',drawer).textContent=row.text;$('[data-results]',drawer).replaceChildren();
+      const row=await json(root.dataset.createClient,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});form.elements.client_id.value=row.id;$('[data-search]',drawer).value=row.text;$('[data-client-label]',drawer).textContent=`مراجع انتخاب‌شده: ${row.text}`;$('[data-drawer-error]',drawer).textContent='';$('[data-results]',drawer).replaceChildren();
     }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}};
-  form.onsubmit=async e=>{e.preventDefault();try {const body=new FormData(form);['first_name','last_name','phone','national_id'].forEach(key=>body.delete(key));
+  form.onsubmit=async e=>{e.preventDefault();try {if (!form.elements.client_id.value) throw new Error('ابتدا مراجع را جستجو و از نتایج انتخاب کنید یا با «ایجاد مراجع» ثبت کنید.');const body=new FormData(form);['first_name','last_name','phone','national_id'].forEach(key=>body.delete(key));
       $('[data-drawer-error]',drawer).textContent='';
-      await json(root.dataset.save,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});drawer.hidden=true;await load();
+      const submit=form.querySelector('[type=submit]');submit.disabled=true;
+      try { await json(root.dataset.save,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});drawer.hidden=true;await load(); }
+      finally { submit.disabled=false; }
     }catch(err){$('[data-drawer-error]',drawer).textContent=err.message;}};
   $('[data-view]').onchange=e=>{state.view=e.target.value;load();};
   $('[data-prev]').onclick=()=>{state.date.setDate(state.date.getDate()-(state.view==='week'?7:1));state.month=new Date(state.date);load();};
