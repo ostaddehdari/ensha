@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/core.bundle.css') }}">
     <link rel="stylesheet" href="{{ asset('css/ensha.css').'?v=0.9.0' }}">
     <link rel="stylesheet" href="{{ asset('css/ensha-metronic.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/jalali-datepicker.css').'?v=0.18.8' }}">
     @stack('head')
 </head>
 <body class="antialiased flex h-full text-base text-foreground bg-background demo1 kt-sidebar-fixed kt-header-fixed ensha-metronic-body">
@@ -118,6 +119,7 @@
 <script src="{{ asset('assets/js/widgets/general.js') }}"></script>
 <script src="{{ asset('assets/js/layouts/demo1.js') }}"></script>
 <script src="{{ asset('js/ensha.js') }}"></script>
+<script src="{{ asset('js/jalali-datepicker.js').'?v=0.18.8' }}"></script>
 @stack('scripts')
 </body>
 </html>

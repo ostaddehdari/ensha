@@ -18,6 +18,8 @@
   const longDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   const persian = new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn', {year:'numeric', month:'numeric', day:'numeric'});
   const monthLabel = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {year:'numeric', month:'long'});
+  const columnColors = ['#fffbea','#fff1f2','#eff6ff','#ecfdf5','#faf5ff','#fff7ed','#f0fdfa','#fdf2f8'];
+  const colorIndex = value => [...String(value ?? '')].reduce((sum,char)=>sum+char.charCodeAt(0),0)%columnColors.length;
   const query = (url, params) => `${url}?${new URLSearchParams(params)}`;
   const parts = date => Object.fromEntries(persian.formatToParts(date).filter(p => ['year','month','day'].includes(p.type)).map(p => [p.type, Number(p.value)]));
   async function json(url, options = {}) {
@@ -66,13 +68,14 @@
   $('[data-month-next]').onclick=()=>shiftMonth(1);
   const dp = new DayPilot.Calendar('stage06-daypilot', {
     viewType:'Resources', startDate:ymd(state.date), locale:'fa-ir',
-    heightSpec:'BusinessHours',
+    heightSpec:'Fixed', height:720, scrollToHour:8,
     dayBeginsHour:8, dayEndsHour:21, businessBeginsHour:8, businessEndsHour:16, cellDuration:15,
     onTimeRangeSelected:args=>{if(root.dataset.manage==='1') open(args.start.toString(),args.resource);},
     onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
     onEventMove:async args=>{args.preventDefault();if(root.dataset.manage!=='1')return;
       try {await json(`${root.dataset.move}/${args.e.data.id}`,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':root.dataset.csrf},body:JSON.stringify({start:args.newStart.toString(),end:args.newEnd.toString(),counselor_id:args.newResource||args.e.data.resource})});await load();}
       catch(e){error.textContent=e.message;await load();}},
+    onBeforeCellRender:args=>{const key=args.cell.resource ?? args.cell.x ?? 0;const color=columnColors[colorIndex(key)];if(args.cell.properties)args.cell.properties.backColor=color;else args.cell.backColor=color;},
     onBeforeEventRender:args=>{args.data.backColor=args.data.topicColor; args.data.barColor=args.data.statusColor; args.data.fontColor='#111827';}
   });
   dp.init();

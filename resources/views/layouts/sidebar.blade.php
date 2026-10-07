@@ -1,18 +1,48 @@
 @php
-    $actor = auth()->user();
-    $role = $actor->assignedRole?->slug ?? $actor->role;
-    $items = collect(array_merge(config('panels.menus.common', []), config("panels.menus.{$role}", [])))
-        ->filter(fn ($item) => isset($item['section']) || (
-            isset($item['route']) && \Illuminate\Support\Facades\Route::has($item['route'])
-            && (empty($item['centre']) || $actor->centre_id)
-            && (empty($item['permission']) || $actor->hasPermission($item['permission']))
-        ))
-        ->values();
-    // Remove headings with no visible child links.
-    $items = $items->filter(function ($item, $index) use ($items) {
-        if (! isset($item['section'])) return true;
-        return $items->slice($index + 1)->takeUntil(fn ($next) => isset($next['section']))->contains(fn ($next) => isset($next['route']));
-    });
+    $role = auth()->user()->role;
+    $menus = config('panels.menus');
+    $permissionBySlug = collect(config('panels.permission_menus', []))->pluck('permission', 'slug');
+    $items = collect(array_merge($menus['common'] ?? [], $menus[$role] ?? []))
+        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['profile', 'staff', 'work-hours', 'fees', 'appointments'], true))
+        ->filter(function ($item) use ($permissionBySlug) {
+            $slug = $item['slug'] ?? null;
+            return ! $slug || ! $permissionBySlug->has($slug) || auth()->user()->hasPermission($permissionBySlug->get($slug));
+        })->values()->all();
+    $existingSlugs = collect($items)->pluck('slug')->filter();
+    $permissionItems = collect(config('panels.permission_menus', []))
+        ->filter(fn ($item) => auth()->user()->hasPermission($item['permission']))
+        ->reject(fn ($item) => $role === 'super_admin' && in_array($item['slug'] ?? '', ['staff', 'work-hours', 'fees', 'appointments'], true))
+        ->reject(fn ($item) => $existingSlugs->contains($item['slug']))
+        ->values()->all();
+    if ($permissionItems) {
+        $items[] = ['section' => 'دسترسی‌های مجاز'];
+        $items = array_merge($items, $permissionItems);
+    }
+    $activeFor = function (string $slug): bool {
+        return match ($slug) {
+            'dashboard' => request()->routeIs('dashboard'),
+            'profile' => request()->routeIs('profile.*'),
+            'users' => request()->routeIs('users.*'),
+            'roles' => request()->routeIs('roles.*'),
+            'permissions' => request()->routeIs('permissions.*'),
+            'profile-fields' => request()->routeIs('profile-fields.*'),
+            'centres' => request()->routeIs('centres.*'),
+            'staff' => request()->routeIs('staff.*'),
+            'clients' => request()->routeIs('clients.*'),
+            'cases' => request()->routeIs('cases.*'),
+            'client-duplicates' => request()->routeIs('clients.duplicates') || request()->routeIs('clients.merge'),
+            'branches' => request()->routeIs('centres.branches.*'),
+            'centre-settings' => request()->routeIs('centres.settings.*'),
+            'centre-operations' => request()->routeIs('centres.operations'),
+            'work-hours' => request()->routeIs('module.work-hours') || request()->routeIs('centres.work-hours'),
+            'holidays' => request()->routeIs('module.holidays') || request()->routeIs('centres.holidays'),
+            'leaves' => request()->routeIs('module.leaves') || request()->routeIs('centres.leaves'),
+            'rooms' => request()->routeIs('module.rooms') || request()->routeIs('centres.rooms'),
+            'appointments-settings' => request()->routeIs('centres.appointments-settings.*'),
+            'appointments', 'my-appointments', 'my-calendar', 'new-appointment' => request()->routeIs('appointments.*'),
+            default => request()->routeIs('module') && request()->route('module') === $slug,
+        };
+    };
 @endphp
 
 <div class="kt-sidebar bg-background border-e border-e-border fixed top-0 bottom-0 z-20 hidden lg:flex flex-col items-stretch shrink-0 [--kt-drawer-enable:true] lg:[--kt-drawer-enable:false] ensha-light-sidebar" data-kt-drawer="true" data-kt-drawer-class="kt-drawer kt-drawer-start top-0 bottom-0" id="sidebar">
@@ -30,19 +60,33 @@
                         @continue
                     @endif
                     @php
-                        $href = ! empty($item['centre']) ? route($item['route'], $actor->centre_id) : route($item['route']);
-                        $isActive = request()->routeIs($item['route']) || match ($item['slug'] ?? '') {
-                            'profile' => request()->routeIs('profile.*'),
-                            'users' => request()->routeIs('users.*'),
-                            'roles' => request()->routeIs('roles.*', 'permissions.*'),
-                            'centres' => request()->routeIs('centres.index', 'centres.show'),
-                            'clients' => request()->routeIs('clients.index', 'clients.show', 'clients.edit'),
-                            'cases' => request()->routeIs('cases.*'),
-                            'appointments' => request()->routeIs('appointments.calendar', 'appointments.show'),
-                            default => false,
-                        };
+                        $href = '#';
+                        if (($item['slug'] ?? '') === 'dashboard') $href = route('dashboard');
+                        elseif (($item['slug'] ?? '') === 'profile') $href = route('profile.show');
+                        elseif (($item['slug'] ?? '') === 'users') $href = route('users.index');
+                        elseif (($item['slug'] ?? '') === 'roles') $href = route('roles.index');
+                        elseif (($item['slug'] ?? '') === 'permissions') $href = route('permissions.index');
+                        elseif (($item['slug'] ?? '') === 'profile-fields') $href = route('profile-fields.index');
+                        elseif (($item['slug'] ?? '') === 'centres') $href = route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'centre-operations') $href = route('centres.topics', auth()->user()->centre_id);
+                        elseif (($item['slug'] ?? '') === 'work-hours') $href = route('module.work-hours');
+                        elseif (($item['slug'] ?? '') === 'fees') $href = route('module.fees');
+                        elseif (($item['slug'] ?? '') === 'holidays') $href = route('module.holidays');
+                        elseif (($item['slug'] ?? '') === 'leaves') $href = route('module.leaves');
+                        elseif (($item['slug'] ?? '') === 'rooms') $href = route('module.rooms');
+                        elseif (in_array(($item['slug'] ?? ''), ['appointments', 'my-appointments', 'my-calendar'], true)) $href = route('appointments.index');
+                        elseif (($item['slug'] ?? '') === 'new-appointment') $href = route('appointments.create');
+                        elseif (($item['slug'] ?? '') === 'staff') $href = route('staff.index');
+                        elseif (($item['slug'] ?? '') === 'clients') $href = route('clients.index');
+                        elseif (($item['slug'] ?? '') === 'cases') $href = route('cases.index');
+                        elseif (($item['slug'] ?? '') === 'client-duplicates') $href = route('clients.duplicates');
+                        elseif (($item['slug'] ?? '') === 'branches') $href = auth()->user()->centre_id ? route('centres.branches.index', auth()->user()->centre_id) : route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'centre-settings') $href = auth()->user()->centre_id ? route('centres.settings.edit', auth()->user()->centre_id) : route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'appointments-settings') $href = auth()->user()->centre_id ? route('centres.appointments-settings.index', auth()->user()->centre_id) : route('centres.index');
+                        elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);
+                        $isActive = $activeFor($item['slug'] ?? '');
                     @endphp
-                    <div class="kt-menu-item {{ $isActive ? 'active' : '' }}"><a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[10px] ps-[10px] pe-[10px] py-[8px] {{ $isActive ? 'active bg-accent/60 rounded-lg' : '' }}" href="{{ $href }}"><span class="kt-menu-icon items-start text-muted-foreground w-[20px]"><i class="{{ $item['icon'] ?? 'ki-filled ki-element-11' }} text-lg"></i></span><span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary">{{ $item['label'] }}</span></a></div>
+                    <div class="kt-menu-item {{ $isActive ? 'active' : '' }}"><a class="kt-menu-link border border-transparent items-center grow kt-menu-item-active:bg-accent/60 kt-menu-item-active:rounded-lg hover:bg-accent/60 hover:rounded-lg gap-[10px] ps-[10px] pe-[10px] py-[8px] {{ $isActive ? 'active bg-accent/60 rounded-lg' : '' }}" href="{{ $href }}" @if($item['fake'] ?? false) data-kt-drawer-toggle="#{{ $item['slug'] === 'chat' ? 'chat_drawer' : 'notifications_drawer' }}" @endif><span class="kt-menu-icon items-start text-muted-foreground w-[20px]"><i class="{{ $item['icon'] ?? 'ki-filled ki-element-11' }} text-lg"></i></span><span class="kt-menu-title text-sm font-medium text-foreground kt-menu-item-active:text-primary">{{ $item['label'] }}</span>@if($item['fake'] ?? false)<span class="kt-menu-badge me-[-5px]"><span class="kt-badge kt-badge-xs kt-badge-light">نمایشی</span></span>@endif</a></div>
                 @endforeach
             </div>
         </div>

@@ -1,5 +1,5 @@
 @extends('layouts.app', ['title'=>request()->routeIs('dashboard') ? 'داشبورد منشی' : 'اسکجول منشی'])
-@push('head')<link rel="stylesheet" href="{{ asset('css/secretary-calendar.css').'?v=0.18.7' }}"><link rel="stylesheet" href="{{ asset('css/stage06.css').'?v=0.18.7' }}">@endpush
+@push('head')<link rel="stylesheet" href="{{ asset('css/secretary-calendar.css').'?v=0.18.8' }}"><link rel="stylesheet" href="{{ asset('css/stage06.css').'?v=0.18.8' }}">@endpush
 @section('content')
 @include('appointments.partials.nav')
 <div class="ensha-page-heading"><div><span class="ensha-eyebrow">Stage 06</span><h2>{{ request()->routeIs('dashboard') ? 'داشبورد منشی و تقویم نوبت‌ها' : 'اسکجول منشی' }}</h2><p>برنامهٔ روزانهٔ چندمشاوره و نمایش هفتگی؛ ثبت و جابه‌جایی با تأیید سرور.</p></div><a href="{{ route('attendance.index') }}" class="ensha-secondary-btn">حضور و غیاب</a></div>
@@ -25,4 +25,4 @@
 <label>مبلغ پرداختی<input name="paid_amount" type="number" min="0" value="0"></label><label>یادداشت پرداخت<input name="payment_note"></label><label>توضیح<textarea name="notes" maxlength="2000"></textarea></label>
 <button class="ensha-primary-btn" type="submit">ثبت نهایی نوبت</button><p data-drawer-error role="alert"></p></form></div></aside>
 @endsection
-@push('scripts')<script src="{{ asset('vendor/daypilot/daypilot-javascript.min.js') }}"></script><script src="{{ asset('js/stage06-scheduler.js').'?v=0.18.7' }}"></script>@endpush
+@push('scripts')<script src="{{ asset('vendor/daypilot/daypilot-javascript.min.js') }}"></script><script src="{{ asset('js/stage06-scheduler.js').'?v=0.18.8' }}"></script>@endpush

@@ -44,7 +44,7 @@ return [
             ['label'=>'اتاق‌ها','slug'=>'rooms','route'=>'centres.rooms','centre'=>true,'permission'=>'schedules.view','icon'=>'ki-filled ki-home-2'],
             ['label'=>'نوبت‌ها و تقویم','slug'=>'appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-8'],
             ['label'=>'عملیات روزانه','slug'=>'operations','route'=>'operations.index','permission'=>'appointments.manage','icon'=>'ki-filled ki-check-circle'],
-            ['label'=>'تنظیمات نوبت‌دهی','slug'=>'stage06-settings','route'=>'stage06.settings','permission'=>'appointments.manage','icon'=>'ki-filled ki-setting-2'],
+            ['label'=>'تنظیمات نوبت‌دهی','slug'=>'appointments-settings','route'=>'centres.appointments-settings.index','centre'=>true,'permission'=>'appointments.manage','icon'=>'ki-filled ki-setting-2'],
         ],
         'secretary' => [
             ['section'=>'عملیات منشی'],

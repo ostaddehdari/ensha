@@ -10,9 +10,9 @@ use Illuminate\Validation\ValidationException;
 
 class AppointmentRescheduleService
 {
-    public function move(Appointment $appointment, AppointmentSlot $target, int $actorId): Appointment
+    public function move(Appointment $appointment, AppointmentSlot $target, int $actorId, bool $allowPastManual = false): Appointment
     {
-        return DB::transaction(function () use ($appointment,$target,$actorId) {
+        return DB::transaction(function () use ($appointment,$target,$actorId,$allowPastManual) {
             $current=Appointment::lockForUpdate()->findOrFail($appointment->id);
             $target=AppointmentSlot::lockForUpdate()->findOrFail($target->id);
             if ($target->id===$current->slot_id) return $current;
@@ -22,7 +22,7 @@ class AppointmentRescheduleService
             DB::table('users')->where('id',$target->counselor_id)->lockForUpdate()->first();
             DB::table('clients')->where('id',$current->client_id)->lockForUpdate()->first();
             if ($target->room_id) DB::table('centre_rooms')->where('id',$target->room_id)->lockForUpdate()->first();
-            app(AppointmentAvailabilityService::class)->assertBookable($target,$current->client_id,$current->id);
+            app(AppointmentAvailabilityService::class)->assertBookable($target,$current->client_id,$current->id,$allowPastManual);
             $old=AppointmentSlot::lockForUpdate()->findOrFail($current->slot_id);
             $seat=((int) Appointment::withTrashed()->where('slot_id',$target->id)->max('seat_number'))+1;
             $old->update(['booked_count'=>max(0,$old->booked_count-1),'status'=>'available','lock_version'=>$old->lock_version+1]);

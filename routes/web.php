@@ -151,13 +151,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/stage06/clients/quick', [Stage06ClientController::class,'quickCreate'])->middleware('throttle:sensitive')->name('stage06.clients.quick');
         Route::get('/stage06/clients/{client}/complete', [Stage06ClientController::class,'edit'])->name('stage06.clients.edit');
         Route::put('/stage06/clients/{client}/complete', [Stage06ClientController::class,'update'])->middleware('throttle:sensitive')->name('stage06.clients.update');
-        Route::get('/stage06/settings', [Stage06SettingsController::class,'index'])->name('stage06.settings');
-        Route::post('/stage06/booking-policy', [Stage06SettingsController::class,'bookingPolicy'])->middleware('throttle:sensitive')->name('stage06.booking-policy');
-        Route::post('/stage06/discounts', [Stage06SettingsController::class,'discount'])->name('stage06.discounts.store');
-        Route::post('/stage06/statuses', [Stage06SettingsController::class,'status'])->name('stage06.statuses.store');
-        Route::post('/stage06/mappings', [Stage06SettingsController::class,'mapping'])->name('stage06.mappings.store');
-        Route::post('/stage06/record-settings', [Stage06SettingsController::class,'record'])->name('stage06.records.settings');
-        Route::post('/stage06/field-permissions', [Stage06SettingsController::class,'fieldPermission'])->name('stage06.records.permissions');
+        Route::get('/stage06/settings', fn (\Illuminate\Http\Request $request) => redirect()->route('centres.appointments-settings.index', $request->user()->centre_id))->name('stage06.settings');
+        Route::prefix('/centres/{centre}/appointments-settings')->name('centres.appointments-settings.')->group(function () {
+            Route::get('/', [Stage06SettingsController::class,'index'])->name('index');
+            Route::post('/booking-policy', [Stage06SettingsController::class,'bookingPolicy'])->middleware('throttle:sensitive')->name('booking-policy');
+            Route::post('/discounts', [Stage06SettingsController::class,'discount'])->name('discounts.store');
+            Route::post('/statuses', [Stage06SettingsController::class,'status'])->name('statuses.store');
+            Route::post('/mappings', [Stage06SettingsController::class,'mapping'])->name('mappings.store');
+            Route::post('/record-settings', [Stage06SettingsController::class,'record'])->name('records.settings');
+            Route::post('/field-permissions', [Stage06SettingsController::class,'fieldPermission'])->name('records.permissions');
+        });
         Route::get('/attendance', [StaffAttendanceController::class,'index'])->name('attendance.index');
         Route::post('/attendance/start', [StaffAttendanceController::class,'start'])->middleware('throttle:sensitive')->name('attendance.start');
         Route::post('/attendance/end', [StaffAttendanceController::class,'end'])->middleware('throttle:sensitive')->name('attendance.end');

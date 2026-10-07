@@ -207,11 +207,29 @@ class SecretaryCalendarController extends Controller
         $data = $request->validate(['start' => 'required|date', 'end' => 'required|date|after:start', 'counselor_id' => 'required|integer|exists:users,id']);
         if (in_array($appointment->status, ['cancelled', 'completed', 'no_show'], true)) return response()->json(['message' => 'نوبت نهایی‌شده قابل جابه‌جایی نیست.'], 409);
         try {
-            $target = AppointmentSlot::where('centre_id',$appointment->centre_id)->where('counselor_id',$data['counselor_id'])
-                ->where('topic_id',$appointment->topic_id)->where('starts_at',Carbon::parse($data['start']))
-                ->where('ends_at',Carbon::parse($data['end']))->first();
-            if (! $target) throw ValidationException::withMessages(['start'=>'اسلات مقصد وجود ندارد.']);
-            $updated=app(AppointmentRescheduleService::class)->move($appointment,$target,$request->user()->id);
+            $centreId=(int) $appointment->centre_id;
+            abort_unless($this->counselors($centreId)->contains('id',(int) $data['counselor_id']),403);
+            $start=Carbon::parse($data['start']); $end=Carbon::parse($data['end']);
+            $policy=BookingPolicy::forCentre($centreId);
+            if ($start->isPast() && ! $policy->allow_past_bookings) throw ValidationException::withMessages(['start'=>'انتقال نوبت به زمان گذشته غیرفعال است.']);
+            $updated=DB::transaction(function () use ($appointment,$data,$start,$end,$policy,$centreId,$request) {
+                $target=AppointmentSlot::where('centre_id',$centreId)->where('counselor_id',$data['counselor_id'])
+                    ->where('topic_id',$appointment->topic_id)->where('starts_at',$start)->where('mode',$appointment->mode)->lockForUpdate()->first();
+                if ($target && (! $target->ends_at->equalTo($end) || $target->status!=='available')) throw ValidationException::withMessages(['start'=>'زمان مقصد قبلاً اشغال شده است.']);
+                if (! $target) {
+                    $roomId=null;
+                    if ($policy->check_rooms && $appointment->mode==='in_person' && $appointment->topic?->requires_room) {
+                        foreach (DB::table('centre_rooms')->where('centre_id',$centreId)->where('is_active',true)->pluck('id') as $candidate) {
+                            if (! Appointment::where('room_id',$candidate)->where('id','!=',$appointment->id)->whereNotIn('status',['cancelled','no_show'])->where('starts_at','<',$end)->where('ends_at','>',$start)->exists()) { $roomId=$candidate; break; }
+                        }
+                        if (! $roomId) throw ValidationException::withMessages(['start'=>'اتاق آزادی برای زمان مقصد وجود ندارد.']);
+                    }
+                    $target=AppointmentSlot::create(['centre_id'=>$centreId,'branch_id'=>$appointment->branch_id,'topic_id'=>$appointment->topic_id,
+                        'counselor_id'=>$data['counselor_id'],'room_id'=>$roomId,'slot_date'=>$start->toDateString(),'starts_at'=>$start,'ends_at'=>$end,
+                        'mode'=>$appointment->mode,'capacity'=>1,'booked_count'=>0,'status'=>'available','source'=>'secretary_manual']);
+                }
+                return app(AppointmentRescheduleService::class)->move($appointment,$target,$request->user()->id,true);
+            });
             return response()->json($this->event($updated->load(['client.user', 'topic', 'counselor', 'slot.room'])));
         } catch (ValidationException $e) { return response()->json(['message' => 'تداخل زمان', 'errors' => $e->errors()], 409); }
     }
