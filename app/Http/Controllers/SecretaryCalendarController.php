@@ -14,6 +14,7 @@ use App\Services\AppointmentRescheduleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SecretaryCalendarController extends Controller
@@ -94,16 +95,21 @@ class SecretaryCalendarController extends Controller
             'appointment_date' => 'required|date_format:Y-m-d', 'start_time' => 'required|date_format:H:i',
             'duration_minutes' => 'required|integer|min:15|max:240',
             'counselor_id' => 'required|integer|exists:users,id', 'topic_id' => 'required|integer|exists:service_topics,id',
-            'mode' => 'required|in:in_person,video,phone', 'client_id' => 'required|integer|exists:clients,id',
+            'mode' => 'required|in:in_person,video,phone', 'client_id' => 'nullable|integer|exists:clients,id',
+            'first_name' => 'required_without:client_id|nullable|string|max:100',
+            'last_name' => 'required_without:client_id|nullable|string|max:100',
+            'phone' => 'nullable|string|max:20', 'national_id' => 'nullable|string|max:20',
             'case_id' => 'nullable|integer|exists:cases,id', 'notes' => 'nullable|string|max:2000',
             'discount_id' => 'nullable|integer', 'paid_amount' => 'nullable|integer|min:0',
             'payment_note' => 'nullable|string|max:2000',
         ]);
         $centreId = (int) $request->user()->centre_id;
-        $client = Client::where('centre_id', $centreId)->findOrFail($data['client_id']);
+        $client = ! empty($data['client_id']) ? Client::where('centre_id', $centreId)->where('status', 'active')->whereNull('merged_into_id')->findOrFail($data['client_id']) : null;
+        if (! $client) abort_unless($request->user()->hasPermission('clients.manage'), 403);
         abort_unless($this->counselors($centreId)->contains('id', (int) $data['counselor_id']), 403);
         $topic = ServiceTopic::whereHas('category', fn ($q) => $q->where('centre_id', $centreId))
             ->where('is_active', true)->findOrFail($data['topic_id']);
+        if (! empty($data['case_id']) && ! $client) throw ValidationException::withMessages(['case_id' => 'پرونده برای مراجع جدید قابل انتخاب نیست.']);
         if (! empty($data['case_id'])) abort_unless($client->cases()->whereKey($data['case_id'])->exists(), 422);
         $start = Carbon::createFromFormat('!Y-m-d H:i', $data['appointment_date'].' '.$data['start_time']);
         $end = $start->copy()->addMinutes((int) $data['duration_minutes']);
@@ -115,6 +121,7 @@ class SecretaryCalendarController extends Controller
             $appointment = \Illuminate\Support\Facades\Cache::store(config('appointments.lock_store', 'redis'))
                 ->lock('ensha:manual-counselor:'.$data['counselor_id'], 30)->block(8, function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
                     return DB::transaction(function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
+                        $client ??= $this->createClientForBooking($data, $request, $centreId);
                         $existing = AppointmentSlot::where('counselor_id', $data['counselor_id'])
                             ->where('topic_id', $topic->id)->where('starts_at', $start)
                             ->where('mode', $data['mode'])->lockForUpdate()->first();
@@ -153,6 +160,39 @@ class SecretaryCalendarController extends Controller
         } catch (\Illuminate\Contracts\Cache\LockTimeoutException $e) {
             return response()->json(['message' => 'ثبت نوبت هم‌زمان در جریان است؛ دوباره تلاش کنید.'], 409);
         }
+    }
+
+    private function createClientForBooking(array $data, Request $request, int $centreId): Client
+    {
+        $phone = trim((string) ($data['phone'] ?? ''));
+        $nationalId = trim((string) ($data['national_id'] ?? ''));
+        if ($phone || $nationalId) {
+            $duplicate = User::where(function ($query) use ($phone, $nationalId) {
+                if ($phone) $query->where('phone', $phone);
+                if ($nationalId && $phone) $query->orWhere('national_id', $nationalId);
+                elseif ($nationalId) $query->where('national_id', $nationalId);
+            })->exists();
+            if ($duplicate) throw ValidationException::withMessages(['client_id' => 'این شماره تماس یا کد ملی قبلاً ثبت شده است؛ مراجع را جستجو و انتخاب کنید.']);
+        }
+        $roleId = DB::table('roles')->where('slug', 'client')->value('id');
+        $user = User::create([
+            'first_name' => trim($data['first_name']), 'last_name' => trim($data['last_name']),
+            'name' => trim($data['first_name'].' '.$data['last_name']),
+            'phone' => $phone ?: 'TMP'.Str::upper(Str::random(16)),
+            'national_id' => $nationalId ?: null, 'password' => Str::random(48),
+            'role' => 'client', 'role_id' => $roleId, 'centre_id' => $centreId,
+            'is_active' => false, 'status' => 'inactive', 'must_change_password' => true,
+            'created_by' => $request->user()->id,
+        ]);
+        if ($roleId) DB::table('user_role_centres')->insert([
+            'user_id' => $user->id, 'role_id' => $roleId, 'centre_id' => $centreId,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        return Client::create([
+            'user_id' => $user->id, 'centre_id' => $centreId,
+            'client_code' => 'CL-'.Str::upper(Str::random(12)),
+            'status' => 'active', 'profile_state' => 'minimal', 'created_by' => $request->user()->id,
+        ]);
     }
 
     public function updateEvent(Request $request, Appointment $appointment)

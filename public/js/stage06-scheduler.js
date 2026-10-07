@@ -113,12 +113,17 @@
     try {const rows=await json(query(root.dataset.clients,{q}));const out=$('[data-results]',drawer);out.replaceChildren();out.className='stage06-suggestions';
       rows.forEach(row=>{const button=document.createElement('button');button.type='button';button.textContent=row.text+(row.profile_state==='minimal'?' · پرونده ناقص':'');
         button.onclick=()=>{form.elements.client_id.value=row.id;$('[data-search]',drawer).value=row.text;$('[data-client-label]',drawer).textContent=`مراجع انتخاب‌شده: ${row.text}`;out.replaceChildren();$('[data-drawer-error]',drawer).textContent='';};out.append(button);});
-      if(!rows.length)out.textContent='مراجعی یافت نشد؛ از ثبت سریع استفاده کنید.';
+      if(!rows.length)out.textContent='مراجعی یافت نشد؛ مشخصات مراجع جدید را در همین فرم وارد کنید.';
     }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}},250);};
-  $('[data-client-create]',drawer).onclick=async()=>{try {const body=new FormData();['first_name','last_name','phone','national_id'].forEach(k=>body.set(k,form.elements[k].value));
-      const row=await json(root.dataset.createClient,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});form.elements.client_id.value=row.id;$('[data-search]',drawer).value=row.text;$('[data-client-label]',drawer).textContent=`مراجع انتخاب‌شده: ${row.text}`;$('[data-drawer-error]',drawer).textContent='';$('[data-results]',drawer).replaceChildren();
-    }catch(e){$('[data-drawer-error]',drawer).textContent=e.message;}};
-  form.onsubmit=async e=>{e.preventDefault();try {if (!form.elements.client_id.value) throw new Error('ابتدا مراجع را جستجو و از نتایج انتخاب کنید یا با «ایجاد مراجع» ثبت کنید.');const body=new FormData(form);['first_name','last_name','phone','national_id'].forEach(key=>body.delete(key));
+  ['first_name','last_name','phone','national_id'].forEach(key => {
+    form.elements[key].addEventListener('input', () => {
+      form.elements.client_id.value='';
+      $('[data-client-label]',drawer).textContent='';
+      $('[data-search]',drawer).value='';
+      $('[data-results]',drawer).replaceChildren();
+    });
+  });
+  form.onsubmit=async e=>{e.preventDefault();try {if (!form.elements.client_id.value && (!form.elements.first_name.value.trim() || !form.elements.last_name.value.trim())) throw new Error('مراجع موجود را از نتایج انتخاب کنید، یا نام و نام خانوادگی مراجع جدید را وارد کنید.');const body=new FormData(form);
       $('[data-drawer-error]',drawer).textContent='';
       const submit=form.querySelector('[type=submit]');submit.disabled=true;
       try { await json(root.dataset.save,{method:'POST',headers:{'X-CSRF-TOKEN':root.dataset.csrf},body});drawer.hidden=true;await load(); }

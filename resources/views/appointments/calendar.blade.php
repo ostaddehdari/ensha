@@ -1,5 +1,5 @@
 @extends('layouts.app', ['title'=>request()->routeIs('dashboard') ? 'داشبورد منشی' : 'اسکجول منشی'])
-@push('head')<link rel="stylesheet" href="{{ asset('css/secretary-calendar.css').'?v=0.18.4' }}"><link rel="stylesheet" href="{{ asset('css/stage06.css').'?v=0.18.4' }}">@endpush
+@push('head')<link rel="stylesheet" href="{{ asset('css/secretary-calendar.css').'?v=0.18.5' }}"><link rel="stylesheet" href="{{ asset('css/stage06.css').'?v=0.18.5' }}">@endpush
 @section('content')
 @include('appointments.partials.nav')
 <div class="ensha-page-heading"><div><span class="ensha-eyebrow">Stage 06</span><h2>{{ request()->routeIs('dashboard') ? 'داشبورد منشی و تقویم نوبت‌ها' : 'اسکجول منشی' }}</h2><p>برنامهٔ روزانهٔ چندمشاوره و نمایش هفتگی؛ ثبت و جابه‌جایی با تأیید سرور.</p></div><a href="{{ route('attendance.index') }}" class="ensha-secondary-btn">حضور و غیاب</a></div>
@@ -15,8 +15,8 @@
 <label>موضوع<select name="topic_id" data-topic required><option value="">انتخاب موضوع</option>@foreach($topics as $t)<option value="{{ $t->id }}">{{ $t->name }}</option>@endforeach</select></label>
 <label>شیوه ارائه<select name="mode" data-mode required><option value="">انتخاب شیوه</option><option value="in_person">حضوری</option><option value="video">آنلاین</option><option value="phone">تلفنی</option></select></label>
 <label>وضعیت قابل مشاهده<select data-status><option value="">همه وضعیت‌ها</option>@foreach($statuses as $s)<option value="{{ $s->slug }}">{{ $s->name }}</option>@endforeach</select></label>
-<label>مراجع <input data-search placeholder="جستجو کنید، سپس روی نتیجه بزنید" autocomplete="off"><small>انتخاب مراجع از نتایج جستجو یا ثبت مراجع جدید الزامی است.</small></label><div data-results></div><input type="hidden" name="client_id" required><p data-client-label></p>
-<details><summary>+ ثبت مراجع جدید</summary><div class="stage06-form-grid"><input name="first_name" placeholder="نام"><input name="last_name" placeholder="نام خانوادگی"><input name="phone" placeholder="تلفن"><input name="national_id" placeholder="کد ملی"></div><button type="button" data-client-create>ایجاد مراجع</button></details>
+<label>مراجع موجود <input data-search placeholder="جستجو کنید، سپس روی نتیجه بزنید" autocomplete="off"><small>برای مراجع جدید، مشخصات را در بخش زیر وارد کنید.</small></label><div data-results></div><input type="hidden" name="client_id"><p data-client-label></p>
+<details open><summary>ثبت مراجع جدید همراه نوبت</summary><p>نام و نام خانوادگی را وارد کنید؛ با «ثبت نهایی نوبت»، مراجع و نوبت با هم ثبت می‌شوند.</p><div class="stage06-form-grid"><input name="first_name" placeholder="نام"><input name="last_name" placeholder="نام خانوادگی"><input name="phone" placeholder="تلفن"><input name="national_id" placeholder="کد ملی"></div></details>
 <label>تاریخ میلادی نوبت<input name="appointment_date" type="date" required></label>
 <label>ساعت شروع<input name="start_time" type="time" step="900" required></label>
 <label>مدت مشاوره (دقیقه)<input name="duration_minutes" type="number" min="15" max="240" step="5" value="45" required></label>
@@ -26,4 +26,4 @@
 <label>مبلغ پرداختی<input name="paid_amount" type="number" min="0" value="0"></label><label>یادداشت پرداخت<input name="payment_note"></label><label>توضیح<textarea name="notes" maxlength="2000"></textarea></label>
 <button class="ensha-primary-btn" type="submit">ثبت نهایی نوبت</button><p data-drawer-error role="alert"></p></form></div></aside>
 @endsection
-@push('scripts')<script src="{{ asset('vendor/daypilot/daypilot-javascript.min.js') }}"></script><script src="{{ asset('js/stage06-scheduler.js').'?v=0.18.4' }}"></script>@endpush
+@push('scripts')<script src="{{ asset('vendor/daypilot/daypilot-javascript.min.js') }}"></script><script src="{{ asset('js/stage06-scheduler.js').'?v=0.18.5' }}"></script>@endpush
