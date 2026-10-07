@@ -2,6 +2,14 @@
 @push('head')<link rel="stylesheet" href="{{ asset('css/stage06.css') }}">@endpush
 @section('content')
 <div class="ensha-page-heading"><h2>تنظیمات نوبت‌دهی و پرونده</h2></div>
+<section class="ensha-card stage06-card"><h3>قوانین ثبت نوبت این مرکز</h3>
+<form method="post" action="{{ route('stage06.booking-policy') }}">@csrf
+@if(auth()->user()->isSuperAdmin())<input type="hidden" name="centre_id" value="{{ $centreId }}">@endif
+<label>بررسی اتاق برای نوبت حضوری
+<select name="check_rooms"><option value="0" @selected(! $bookingPolicy->check_rooms)>غیرفعال (فعلی)</option><option value="1" @selected($bookingPolicy->check_rooms)>فعال</option></select></label>
+<label>ثبت نوبت برای زمان گذشته توسط منشی
+<select name="allow_past_bookings"><option value="0" @selected(! $bookingPolicy->allow_past_bookings)>غیرفعال (فعلی)</option><option value="1" @selected($bookingPolicy->allow_past_bookings)>فعال</option></select></label>
+<p>بررسی تداخل مشاور و مراجع همچنان برقرار است. ثبت گذشته فقط از تقویم منشی مجاز می‌شود.</p><button type="submit">ذخیره تنظیمات</button></form></section>
 <section class="ensha-card stage06-card"><h3>تخفیف‌ها</h3><form method="post" action="{{ route('stage06.discounts.store') }}">@csrf<input name="name" placeholder="نام" required><select name="type"><option value="percent">درصدی</option><option value="fixed">ثابت</option></select><input name="value" type="number" min="1" placeholder="مقدار" required><input name="minimum_amount" type="number" min="0" placeholder="حداقل مبلغ"><input name="maximum_discount" type="number" min="0" placeholder="سقف تخفیف"><input name="starts_at" type="datetime-local"><input name="ends_at" type="datetime-local"><label><input type="checkbox" name="is_active" value="1" checked>فعال</label><button>ثبت</button></form>
 @foreach($discounts as $d)<p>{{ $d->name }} · {{ $d->type }} {{ $d->value }} · {{ $d->is_active?'فعال':'غیرفعال' }}</p>@endforeach</section>
 <section class="ensha-card stage06-card"><h3>وضعیت‌های نوبت</h3><form method="post" action="{{ route('stage06.statuses.store') }}">@csrf<input name="name" placeholder="عنوان" required><input name="slug" placeholder="کلید انگلیسی" required><label>نشانگر <input name="indicator_color" type="color" value="#16a34a"></label><label>متن <input name="text_color" type="color" value="#111827"></label><label><input type="checkbox" name="is_final" value="1"> نهایی</label><label><input type="checkbox" name="blocks_slot" value="1" checked> اشغال زمان</label><button>ثبت</button></form>@foreach($statuses as $s)<p><span style="background:{{ $s->indicator_color }};color:{{ $s->text_color }}">{{ $s->name }}</span> · {{ $s->slug }}</p>@endforeach</section>

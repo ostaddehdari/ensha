@@ -66,7 +66,8 @@
   $('[data-month-next]').onclick=()=>shiftMonth(1);
   const dp = new DayPilot.Calendar('stage06-daypilot', {
     viewType:'Resources', startDate:ymd(state.date), locale:'fa-ir',
-    dayBeginsHour:8, dayEndsHour:21, businessBeginsHour:8, businessEndsHour:21, cellDuration:15,
+    heightSpec:'BusinessHours',
+    dayBeginsHour:8, dayEndsHour:21, businessBeginsHour:8, businessEndsHour:16, cellDuration:15,
     onTimeRangeSelected:args=>{if(root.dataset.manage==='1') open(args.start.toString(),args.resource);},
     onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
     onEventMove:async args=>{args.preventDefault();if(root.dataset.manage!=='1')return;

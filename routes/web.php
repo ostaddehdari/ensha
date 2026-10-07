@@ -152,6 +152,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/stage06/clients/{client}/complete', [Stage06ClientController::class,'edit'])->name('stage06.clients.edit');
         Route::put('/stage06/clients/{client}/complete', [Stage06ClientController::class,'update'])->middleware('throttle:sensitive')->name('stage06.clients.update');
         Route::get('/stage06/settings', [Stage06SettingsController::class,'index'])->name('stage06.settings');
+        Route::post('/stage06/booking-policy', [Stage06SettingsController::class,'bookingPolicy'])->middleware('throttle:sensitive')->name('stage06.booking-policy');
         Route::post('/stage06/discounts', [Stage06SettingsController::class,'discount'])->name('stage06.discounts.store');
         Route::post('/stage06/statuses', [Stage06SettingsController::class,'status'])->name('stage06.statuses.store');
         Route::post('/stage06/mappings', [Stage06SettingsController::class,'mapping'])->name('stage06.mappings.store');

@@ -29,9 +29,26 @@ class Stage06SettingsController extends Controller
         $mappings=DB::table('counselor_topics')->where('centre_id',$centreId)->get();
         $fields=ProfileField::whereIn('role',['all','client'])->orderBy('sort_order')->get();
         $record=DB::table('client_record_settings')->where('centre_id',$centreId)->first();
+        $bookingPolicy=\App\Services\BookingPolicy::forCentre($centreId);
         $fieldPermissions=DB::table('client_profile_field_permissions')->where('centre_id',$centreId)->get()->keyBy(fn ($v) => $v->profile_field_id.'_'.$v->role);
-        return view('appointments.stage06-settings',compact('centreId','discounts','statuses','topics','counselors','mappings','fields','record','fieldPermissions'));
+        return view('appointments.stage06-settings',compact('centreId','discounts','statuses','topics','counselors','mappings','fields','record','fieldPermissions','bookingPolicy'));
     }
+    public function bookingPolicy(Request $request)
+    {
+        $centre = $this->centre($request);
+        $data = $request->validate([
+            'check_rooms' => 'required|boolean',
+            'allow_past_bookings' => 'required|boolean',
+        ]);
+        DB::table('centre_booking_policies')->updateOrInsert(
+            ['centre_id' => $centre],
+            ['check_rooms' => (bool) $data['check_rooms'],
+             'allow_past_bookings' => (bool) $data['allow_past_bookings'],
+             'updated_at' => now()]
+        );
+        return back()->with('success', 'تنظیمات نوبت‌دهی ذخیره شد.');
+    }
+
     public function discount(Request $request)
     {
         $centre=$this->centre($request);

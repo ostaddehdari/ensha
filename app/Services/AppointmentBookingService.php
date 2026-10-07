@@ -22,10 +22,10 @@ class AppointmentBookingService
                 DB::table('users')->where('id', $slot->counselor_id)->lockForUpdate()->first();
                 DB::table('clients')->where('id',$clientId)->lockForUpdate()->first();
                 if ($slot->room_id) DB::table('centre_rooms')->where('id',$slot->room_id)->lockForUpdate()->first();
-                if ($slot->status !== 'available' || $slot->booked_count >= $slot->capacity || $slot->starts_at->isPast()) {
+                if ($slot->status !== 'available' || $slot->booked_count >= $slot->capacity || ($slot->starts_at->isPast() && (! BookingPolicy::forCentre((int) $slot->centre_id)->allow_past_bookings || ($options['source'] ?? '') !== 'secretary'))) {
                     throw ValidationException::withMessages(['slot_id' => 'این زمان دیگر قابل رزرو نیست.']);
                 }
-                app(AppointmentAvailabilityService::class)->assertBookable($slot, $clientId);
+                app(AppointmentAvailabilityService::class)->assertBookable($slot, $clientId, null, ($options['source'] ?? '') === 'secretary');
                 $duplicate = Appointment::where('client_id', $clientId)->whereNotIn('status', ['cancelled'])
                     ->where('starts_at', '<', $slot->ends_at)->where('ends_at', '>', $slot->starts_at)->exists();
                 if ($duplicate) throw ValidationException::withMessages(['client_id' => 'مراجع در این بازه نوبت دیگری دارد.']);

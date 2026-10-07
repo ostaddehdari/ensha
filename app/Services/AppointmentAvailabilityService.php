@@ -9,11 +9,12 @@ use Illuminate\Validation\ValidationException;
 
 class AppointmentAvailabilityService
 {
-    public function assertBookable(AppointmentSlot $slot, ?int $clientId, ?int $exceptAppointmentId = null): void
+    public function assertBookable(AppointmentSlot $slot, ?int $clientId, ?int $exceptAppointmentId = null, bool $allowPastManual = false): void
     {
         $date = $slot->starts_at->toDateString(); $time = $slot->starts_at->format('H:i:s'); $end = $slot->ends_at->format('H:i:s');
         $fail = fn (string $message) => throw ValidationException::withMessages(['slot_id'=>$message]);
-        if ($slot->starts_at->isPast() || $slot->status === 'blocked') $fail('زمان قابل رزرو نیست.');
+        $policy = BookingPolicy::forCentre((int) $slot->centre_id);
+        if (($slot->starts_at->isPast() && (! $policy->allow_past_bookings || ! $allowPastManual)) || $slot->status === 'blocked') $fail('زمان قابل رزرو نیست.');
         $topic = $slot->topic;
         if (! $topic || ! $topic->is_active || ! in_array($slot->mode, $topic->allowed_modes ?: ['in_person'], true)) $fail('موضوع یا نوع ارائه غیرفعال است.');
         $mapping = DB::table('counselor_topics')->where('user_id',$slot->counselor_id)->where('topic_id',$slot->topic_id)
@@ -42,7 +43,7 @@ class AppointmentAvailabilityService
             ->when($exceptAppointmentId, fn ($q) => $q->where('id','!=',$exceptAppointmentId));
         if ($clientId && $overlap($active(Appointment::where('client_id',$clientId)))->exists()) $fail('مراجع در این زمان نوبت دیگری دارد.');
         if ($overlap($active(Appointment::where('counselor_id',$slot->counselor_id)->where('slot_id','!=',$slot->id)))->exists()) $fail('مشاور در این زمان نوبت دیگری دارد.');
-        if ($slot->mode === 'in_person' && $topic->requires_room) {
+        if ($policy->check_rooms && $slot->mode === 'in_person' && $topic->requires_room) {
             $room = DB::table('centre_rooms')->where('id',$slot->room_id)->where('centre_id',$slot->centre_id)->where('is_active',true)->first();
             if (! $room || ($room->branch_id && $room->branch_id != $slot->branch_id)) $fail('اتاق مناسب فعال نیست.');
             if ($overlap($active(Appointment::where('room_id',$slot->room_id)))->count() >= $room->capacity) $fail('ظرفیت اتاق تکمیل شده است.');

@@ -11,6 +11,7 @@ use App\Services\AppointmentBookingService;
 use App\Services\AppointmentAvailabilityService;
 use App\Services\AppointmentPricingService;
 use App\Services\AppointmentRescheduleService;
+use App\Services\BookingPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -113,14 +114,18 @@ class SecretaryCalendarController extends Controller
         if (! empty($data['case_id'])) abort_unless($client->cases()->whereKey($data['case_id'])->exists(), 422);
         $start = Carbon::createFromFormat('!Y-m-d H:i', $data['appointment_date'].' '.$data['start_time']);
         $end = $start->copy()->addMinutes((int) $data['duration_minutes']);
-        if ($start->isPast() || $end->toDateString() !== $start->toDateString()) {
-            throw ValidationException::withMessages(['start_time' => 'زمان باید در آینده و در همان روز باشد.']);
+        if ($end->toDateString() !== $start->toDateString()) {
+            throw ValidationException::withMessages(['start_time' => 'زمان پایان باید در همان روز باشد.']);
+        }
+        $policy = BookingPolicy::forCentre($centreId);
+        if ($start->isPast() && ! $policy->allow_past_bookings) {
+            throw ValidationException::withMessages(['start_time' => 'ثبت نوبت در گذشته برای این مرکز غیرفعال است.']);
         }
         // One lock per counselor serializes manual bookings, including overlapping starts.
         try {
             $appointment = \Illuminate\Support\Facades\Cache::store(config('appointments.lock_store', 'redis'))
-                ->lock('ensha:manual-counselor:'.$data['counselor_id'], 30)->block(8, function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
-                    return DB::transaction(function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end) {
+                ->lock('ensha:manual-counselor:'.$data['counselor_id'], 30)->block(8, function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end, $policy) {
+                    return DB::transaction(function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end, $policy) {
                         $client ??= $this->createClientForBooking($data, $request, $centreId);
                         $existing = AppointmentSlot::where('counselor_id', $data['counselor_id'])
                             ->where('topic_id', $topic->id)->where('starts_at', $start)
@@ -132,7 +137,7 @@ class SecretaryCalendarController extends Controller
                             $slot = $existing;
                         } else {
                             $roomId = null;
-                            if ($data['mode'] === 'in_person' && $topic->requires_room) {
+                            if ($policy->check_rooms && $data['mode'] === 'in_person' && $topic->requires_room) {
                                 $roomIds = DB::table('centre_rooms')->where('centre_id', $centreId)->where('is_active', true)->pluck('id');
                                 foreach ($roomIds as $candidate) {
                                     if (! Appointment::where('room_id', $candidate)->whereNotIn('status', ['cancelled','no_show'])
