@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\AppointmentSlot;
+use App\Models\Centre;
+use App\Models\CentreBranch;
 use App\Models\ServiceTopic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -21,14 +23,19 @@ class AppointmentAvailabilityService
         bool $allowPastManual = false,
     ): void {
         $topic = $this->topic($slot);
-        $date = $slot->starts_at->toDateString();
-        $time = $slot->starts_at->format('H:i:s');
-        $end = $slot->ends_at->format('H:i:s');
+        $timezone = $slot->branch_id
+            ? CentreBranch::with('centre')->find($slot->branch_id)?->effectiveTimezone()
+            : Centre::find($slot->centre_id)?->timezone;
+        $localStart = $slot->starts_at->copy()->timezone($timezone ?: config('app.timezone'));
+        $localEnd = $slot->ends_at->copy()->timezone($timezone ?: config('app.timezone'));
+        $date = $localStart->toDateString();
+        $time = $localStart->format('H:i:s');
+        $end = $localEnd->format('H:i:s');
         $fail = fn (string $message) => throw ValidationException::withMessages(['slot_id' => $message]);
         $policy = BookingPolicy::forCentre((int) $slot->centre_id);
 
         $duration = $slot->starts_at->diffInMinutes($slot->ends_at, false);
-        if ($duration < 15 || $duration > 240 || $slot->ends_at->toDateString() !== $date) {
+        if ($duration < 15 || $duration > 240 || $localEnd->toDateString() !== $date) {
             $fail('بازه نوبت باید معتبر و در همان روز باشد.');
         }
         if (($slot->starts_at->isPast() && (! $policy->allow_past_bookings || ! $allowPastManual)) || $slot->status === 'blocked') {
@@ -48,7 +55,8 @@ class AppointmentAvailabilityService
         if (! $mapping) {
             $fail('موضوع به مشاور در این تاریخ تخصیص ندارد.');
         }
-        if (! DB::table('user_role_centres')->where('user_id', $slot->counselor_id)->where('centre_id', $slot->centre_id)->exists()) {
+        if (! DB::table('user_role_centres')->where('user_id', $slot->counselor_id)->where('centre_id', $slot->centre_id)
+            ->when($slot->branch_id, fn ($q) => $q->where(fn ($r) => $r->whereNull('branch_id')->orWhere('branch_id', $slot->branch_id)))->exists()) {
             $fail('مشاور عضو این مرکز نیست.');
         }
         if ($slot->branch_id && ! DB::table('centre_branches')->where('id', $slot->branch_id)->where('centre_id', $slot->centre_id)->exists()) {
@@ -57,7 +65,7 @@ class AppointmentAvailabilityService
 
         $branchScope = fn ($q) => $q->whereNull('branch_id')->orWhere('branch_id', $slot->branch_id);
         $shift = DB::table('counselor_shifts')->where('user_id', $slot->counselor_id)->where('centre_id', $slot->centre_id)
-            ->where('weekday', $slot->starts_at->dayOfWeek)->where('is_active', true)
+            ->where('weekday', $localStart->dayOfWeek)->where('is_active', true)
             ->where($branchScope)->where('starts_at', '<=', $time)->where('ends_at', '>=', $end)->exists();
         $override = DB::table('schedule_exceptions')->where('centre_id', $slot->centre_id)->where('user_id', $slot->counselor_id)
             ->where($branchScope)->whereDate('exception_date', $date)->where('type', 'override')

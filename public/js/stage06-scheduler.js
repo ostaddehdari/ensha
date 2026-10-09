@@ -4,14 +4,16 @@
   const $ = (selector, scope = root) => scope?.querySelector(selector);
   const drawer = document.querySelector('[data-drawer]');
   const form = $('[data-booking]', drawer);
+  const editDrawer = document.querySelector('[data-edit-drawer]');
+  const editForm = $('[data-edit-booking]', editDrawer);
   const error = $('[data-error]');
   const loading = $('[data-loading]');
-  if (!drawer || !form || !window.DayPilot?.Calendar || !window.DayPilot?.Month) {
+  if (!drawer || !form || !editDrawer || !editForm || !window.DayPilot?.Calendar || !window.DayPilot?.Month) {
     error.textContent = 'تقویم بارگذاری نشد. صفحه را تازه کنید؛ در صورت تکرار، فایل DayPilot و خطای مرورگر را بررسی کنید.';
     if (loading) loading.hidden = true;
     return;
   }
-  const state = {date: new Date(), month: new Date(), view: 'day', resources: [], start: null, counselor: null, filters:{counselor_id:'',topic_id:'',status:''}};
+  const state = {date: new Date(), month: new Date(), view: 'day', resources: [], events: new Map(), start: null, counselor: null, filters:{branch_id:'',counselor_id:'',topic_id:'',status:'',mode:''}};
   const pad = value => String(value).padStart(2, '0');
   const ymd = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const local = iso => {const date = new Date(iso); return `${ymd(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;};
@@ -22,6 +24,12 @@
   const colorIndex = value => [...String(value ?? '')].reduce((sum,char)=>sum+char.charCodeAt(0),0)%columnColors.length;
   const query = (url, params) => `${url}?${new URLSearchParams(params)}`;
   const parts = date => Object.fromEntries(persian.formatToParts(date).filter(p => ['year','month','day'].includes(p.type)).map(p => [p.type, Number(p.value)]));
+  const jalaliLabel = value => longDate.format(new Date(`${value}T12:00:00`));
+  const selectedTimezone = () => {
+    const branch = $('[data-calendar-filter][name="branch_id"]');
+    return branch?.selectedOptions[0]?.dataset.timezone || root.dataset.timezone || 'Asia/Tehran';
+  };
+  const refreshTimezone = () => { $('[data-timezone-label]').textContent = `منطقه زمانی: ${selectedTimezone()}`; };
   async function json(url, options = {}) {
     const response = await fetch(url, {
       ...options,
@@ -66,13 +74,14 @@
   }
   $('[data-month-prev]').onclick=()=>shiftMonth(-1);
   $('[data-month-next]').onclick=()=>shiftMonth(1);
-  async function persistMove(id,start,end,counselor) {
-    return json(`${root.dataset.move}/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':root.dataset.csrf},body:JSON.stringify({start,end,counselor_id:counselor})});
+  async function persistMove(id,start,end,counselor,branch) {
+    return json(`${root.dataset.move}/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':root.dataset.csrf},body:JSON.stringify({start,end,counselor_id:counselor,branch_id:branch})});
   }
   async function move(args,resize=false) {
     args.preventDefault(); if(root.dataset.manage!=='1') return;
     const counselor=args.newResource||args.e.data.resource;
-    try {await persistMove(args.e.data.id,args.newStart.toString(),args.newEnd.toString(),counselor);await load();}
+    const branch=state.filters.branch_id||args.e.data.branchId;
+    try {await persistMove(args.e.data.id,args.newStart.toString(),args.newEnd.toString(),counselor,branch);await load();}
     catch(e){error.textContent=e.message;await load();}
   }
   const dp = new DayPilot.Calendar('stage06-daypilot', {
@@ -83,7 +92,7 @@
     heightSpec:'BusinessHours',
     dayBeginsHour:8, dayEndsHour:21, businessBeginsHour:8, businessEndsHour:16, cellDuration:15,
     onTimeRangeSelected:args=>{if(root.dataset.manage==='1') open(args.start.toString(),args.resource);},
-    onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
+    onEventClick:args=>{if(root.dataset.manage==='1') openEdit(args.e.data.id);else if(args.e.data.url) location.href=args.e.data.url;},
     onEventMove:args=>move(args),
     onEventResize:args=>move(args,true),
     onBeforeCellRender:args=>{const key=args.cell.resource ?? args.cell.x ?? 0;const color=columnColors[colorIndex(key)];if(args.cell.properties)args.cell.properties.backColor=color;else args.cell.backColor=color;},
@@ -93,7 +102,7 @@
   const month = new DayPilot.Month('stage06-month', {
     locale:'fa-ir', weekStarts:6, eventMoveHandling:root.dataset.manage==='1'?'Update':'Disabled',
     onTimeRangeSelected:args=>{if(root.dataset.manage==='1'){const counselor=state.filters.counselor_id||state.resources[0]?.id||null;open(`${args.start.toString('yyyy-MM-dd')}T09:00:00`,counselor);}},
-    onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
+    onEventClick:args=>{if(root.dataset.manage==='1') openEdit(args.e.data.id);else if(args.e.data.url) location.href=args.e.data.url;},
     onEventMove:args=>move(args),
     onBeforeEventRender:args=>{args.data.backColor=args.data.topicColor;args.data.barColor=args.data.statusColor;args.data.fontColor='#111827';}
   });
@@ -106,15 +115,16 @@
     return {start:ymd(start),end:ymd(end)};
   }
   async function load() {
-    mini(); $('[data-title]').textContent=longDate.format(state.date); error.textContent=''; loading.hidden=false;
+    mini(); $('[data-title]').textContent=longDate.format(state.date); refreshTimezone(); error.textContent=''; loading.hidden=false;
     try {
       const r=range();
       const [resources, events] = await Promise.all([
-        json(query(root.dataset.resources,{date:ymd(state.date)})),
+        json(query(root.dataset.resources,{date:ymd(state.date),branch_id:state.filters.branch_id})),
         json(query(root.dataset.events,{...r,...state.filters}))
       ]);
       state.resources=resources;
-      const mapped=events.map(e=>({id:e.id,start:local(e.start),end:local(e.end),resource:String(e.resourceId),text:e.title,topicColor:e.color,statusColor:e.statusColor,url:e.url}));
+      state.events=new Map(events.map(event=>[String(event.id),event]));
+      const mapped=events.map(e=>({id:e.id,start:local(e.start),end:local(e.end),resource:String(e.resourceId),text:e.title,topicColor:e.color,statusColor:e.statusColor,url:e.url,branchId:e.branchId,toolTip:`${e.jalaliDate} · ${e.branch||'بدون شعبه'} · ${e.timezone}`}));
       const calendar=$('#stage06-daypilot'), monthElement=$('#stage06-month');
       if(state.view==='month') {calendar.hidden=true;monthElement.hidden=false;month.update({startDate:ymd(state.date),events:mapped});}
       else {monthElement.hidden=true;calendar.hidden=false;if (state.view==='day') dp.update({viewType:'Resources',startDate:ymd(state.date),columns:resources.filter(x=>!state.filters.counselor_id||String(x.id)===state.filters.counselor_id).map(x=>({id:String(x.id),name:`${x.name} · ${x.hours||'بدون شیفت'}`})),events:mapped});else dp.update({viewType:'Week',startDate:ymd(state.date),events:mapped});}
@@ -128,11 +138,44 @@
     state.start=start; state.counselor=counselor;
     form.reset();form.elements.client_id.value='';drawer.hidden=false;
     $('[data-results]',drawer).replaceChildren();$('[data-client-label]',drawer).textContent='';$('[data-drawer-error]',drawer).textContent='';
+    const branch=state.filters.branch_id||root.dataset.defaultBranch;
+    if(branch) $('[data-branch]',drawer).value=String(branch);
     if(counselor) $('[data-counselor]',drawer).value=String(counselor);
     form.elements.appointment_date.value = selected[1];
     form.elements.start_time.value = selected[2];
+    $('[data-create-date]',drawer).textContent=`${jalaliLabel(selected[1])}، ساعت ${selected[2]} · ${selectedTimezone()}`;
   }
   drawer.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{drawer.hidden=true;});
+  editDrawer.querySelectorAll('[data-edit-close]').forEach(button=>button.onclick=()=>{editDrawer.hidden=true;});
+
+  function openEdit(id) {
+    const event=state.events.get(String(id));
+    if(!event) return;
+    editForm.dataset.id=String(event.id);
+    editForm.elements.branch_id.value=String(event.branchId||root.dataset.defaultBranch||'');
+    editForm.elements.counselor_id.value=String(event.counselorId);
+    editForm.elements.appointment_date.value=event.start.slice(0,10);
+    editForm.elements.start_time.value=event.start.slice(11,16);
+    editForm.elements.duration_minutes.value=event.durationMinutes;
+    $('[data-edit-summary]',editDrawer).textContent=`${event.client||'مراجع'} · ${event.topic||'خدمت'} · ${event.branch||'بدون شعبه'}`;
+    $('[data-edit-jalali]',editDrawer).textContent=`تاریخ شمسی: ${event.jalaliDate} · ${event.timezone}`;
+    $('[data-edit-details]',editDrawer).href=event.url;
+    $('[data-edit-error]',editDrawer).textContent='';
+    editDrawer.hidden=false;
+  }
+  editForm.elements.appointment_date.onchange=e=>{$('[data-edit-jalali]',editDrawer).textContent=`تاریخ شمسی: ${jalaliLabel(e.target.value)}`;};
+  editForm.onsubmit=async e=>{
+    e.preventDefault();
+    const date=editForm.elements.appointment_date.value;const time=editForm.elements.start_time.value;
+    const duration=Number(editForm.elements.duration_minutes.value);const start=`${date}T${time}:00`;
+    const endDate=new Date(`${start}`);endDate.setMinutes(endDate.getMinutes()+duration);
+    if(ymd(endDate)!==date){$('[data-edit-error]',editDrawer).textContent='زمان پایان باید در همان روز باشد.';return;}
+    const end=`${ymd(endDate)}T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}:00`;
+    const submit=editForm.querySelector('[type=submit]');submit.disabled=true;$('[data-edit-error]',editDrawer).textContent='';
+    try{await persistMove(editForm.dataset.id,start,end,editForm.elements.counselor_id.value,editForm.elements.branch_id.value);editDrawer.hidden=true;await load();}
+    catch(err){$('[data-edit-error]',editDrawer).textContent=err.message;}
+    finally{submit.disabled=false;}
+  };
 
   let debounce;
   $('[data-search]',drawer).oninput=e=>{clearTimeout(debounce);form.elements.client_id.value='';$('[data-client-label]',drawer).textContent='';const q=e.target.value.trim();if(q.length<2){$('[data-results]',drawer).replaceChildren();return;}debounce=setTimeout(async()=>{
@@ -157,7 +200,7 @@
     }catch(err){$('[data-drawer-error]',drawer).textContent=err.message;}};
   $('[data-view]').onchange=e=>{state.view=e.target.value;load();};
   root.querySelectorAll('[data-calendar-filter]').forEach(select=>select.onchange=()=>{state.filters[select.name]=select.value;load();});
-  $('[data-clear-filters]').onclick=()=>{root.querySelectorAll('[data-calendar-filter]').forEach(s=>s.value='');state.filters={counselor_id:'',topic_id:'',status:''};load();};
+  $('[data-clear-filters]').onclick=()=>{root.querySelectorAll('[data-calendar-filter]').forEach(s=>s.value='');state.filters={branch_id:'',counselor_id:'',topic_id:'',status:'',mode:''};load();};
   $('[data-prev]').onclick=()=>{if(state.view==='month')state.date.setMonth(state.date.getMonth()-1);else state.date.setDate(state.date.getDate()-(state.view==='week'?7:1));state.month=new Date(state.date);load();};
   $('[data-next]').onclick=()=>{if(state.view==='month')state.date.setMonth(state.date.getMonth()+1);else state.date.setDate(state.date.getDate()+(state.view==='week'?7:1));state.month=new Date(state.date);load();};
   $('[data-today]').onclick=()=>{state.date=new Date();state.month=new Date();load();};

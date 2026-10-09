@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\AppointmentSlot;
 use App\Models\AppointmentStatusHistory;
+use App\Models\Centre;
+use App\Models\CentreBranch;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -34,6 +36,7 @@ class AppointmentRescheduleService
     public function moveToRange(
         Appointment $appointment,
         int $counselorId,
+        ?int $branchId,
         Carbon $start,
         Carbon $end,
         int $actorId,
@@ -51,10 +54,10 @@ class AppointmentRescheduleService
         );
 
         return app(AppointmentResourceLockService::class)->block($keys, function () use (
-            $appointment, $counselorId, $start, $end, $actorId, $allowPastManual, $needsRoom,
+            $appointment, $counselorId, $branchId, $start, $end, $actorId, $allowPastManual, $needsRoom,
         ) {
             return DB::transaction(function () use (
-                $appointment, $counselorId, $start, $end, $actorId, $allowPastManual, $needsRoom,
+                $appointment, $counselorId, $branchId, $start, $end, $actorId, $allowPastManual, $needsRoom,
             ) {
                 $current = Appointment::with('topic')->lockForUpdate()->findOrFail($appointment->id);
                 $source = AppointmentSlot::lockForUpdate()->findOrFail($current->slot_id);
@@ -66,6 +69,7 @@ class AppointmentRescheduleService
                 }
 
                 $sameSlot = (int) $source->counselor_id === $counselorId
+                    && ($source->branch_id ? (int) $source->branch_id : null) === $branchId
                     && (int) $source->topic_id === (int) $current->topic_id
                     && $source->mode === $current->mode
                     && $source->starts_at->equalTo($start);
@@ -78,6 +82,9 @@ class AppointmentRescheduleService
                     ->where('counselor_id', $counselorId)->where('topic_id', $current->topic_id)
                     ->where('starts_at', $start)->where('mode', $current->mode)
                     ->where('id', '!=', $source->id)->lockForUpdate()->first();
+                if ($target && ($target->branch_id ? (int) $target->branch_id : null) !== $branchId) {
+                    throw ValidationException::withMessages(['branch_id' => 'مشاور در این زمان در شعبه دیگری برنامه دارد.']);
+                }
                 if ($target && (! $target->ends_at->equalTo($end) || $target->status !== 'available')) {
                     throw ValidationException::withMessages(['start' => 'زمان مقصد قبلاً اشغال شده است.']);
                 }
@@ -85,10 +92,10 @@ class AppointmentRescheduleService
                 if (! $target) {
                     $target = new AppointmentSlot([
                         'centre_id' => $current->centre_id,
-                        'branch_id' => $current->branch_id,
+                        'branch_id' => $branchId,
                         'topic_id' => $current->topic_id,
                         'counselor_id' => $counselorId,
-                        'slot_date' => $start->toDateString(),
+                        'slot_date' => $start->copy()->timezone($this->branchTimezone($branchId, (int) $current->centre_id))->toDateString(),
                         'starts_at' => $start,
                         'ends_at' => $end,
                         'mode' => $current->mode,
@@ -213,5 +220,14 @@ class AppointmentRescheduleService
         ]);
 
         return $current->fresh();
+    }
+
+    private function branchTimezone(?int $branchId, int $centreId): string
+    {
+        if ($branchId) {
+            return CentreBranch::with('centre')->findOrFail($branchId)->effectiveTimezone();
+        }
+
+        return Centre::findOrFail($centreId)->timezone ?: config('app.timezone');
     }
 }
