@@ -38,6 +38,8 @@ use App\Http\Controllers\CounselorClinicalController;
 use App\Http\Controllers\SessionRecordingController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PaymentReceiptController;
+use App\Http\Controllers\CompensationRuleController;
+use App\Http\Controllers\CounselorSettlementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -127,6 +129,15 @@ Route::middleware('auth')->group(function () {
             Route::post('/transactions/{transaction}/void', [FinanceController::class, 'void'])->middleware('throttle:sensitive')->name('transactions.void');
             Route::get('/receipts/{receipt}', [PaymentReceiptController::class, 'show'])->name('receipts.show');
         });
+        Route::get('/centres/{centre}/compensation-rules', [CompensationRuleController::class, 'index'])->name('centres.compensation-rules.index');
+        Route::post('/centres/{centre}/compensation-rules', [CompensationRuleController::class, 'store'])->middleware('throttle:sensitive')->name('centres.compensation-rules.store');
+        Route::patch('/centres/{centre}/compensation-rules/{rule}/retire', [CompensationRuleController::class, 'retire'])->middleware('throttle:sensitive')->name('centres.compensation-rules.retire');
+        Route::get('/finance/settlements', [CounselorSettlementController::class, 'index'])->name('settlements.index');
+        Route::post('/finance/settlements', [CounselorSettlementController::class, 'store'])->middleware('throttle:sensitive')->name('settlements.store');
+        Route::get('/finance/settlements/{settlement}', [CounselorSettlementController::class, 'show'])->name('settlements.show');
+        Route::post('/finance/settlements/{settlement}/approve', [CounselorSettlementController::class, 'approve'])->middleware('throttle:sensitive')->name('settlements.approve');
+        Route::post('/finance/settlements/{settlement}/pay', [CounselorSettlementController::class, 'pay'])->middleware('throttle:sensitive')->name('settlements.pay');
+        Route::post('/finance/settlements/{settlement}/cancel', [CounselorSettlementController::class, 'cancel'])->middleware('throttle:sensitive')->name('settlements.cancel');
         Route::get('/operations', [DailyOperationsController::class, 'index'])->name('operations.index');
         Route::post('/operations/appointments/{appointment}/check-in', [DailyOperationsController::class, 'checkIn'])->middleware('throttle:sensitive')->name('operations.check-in');
         Route::post('/operations/appointments/{appointment}/start', [DailyOperationsController::class, 'startSession'])->middleware('throttle:sensitive')->name('operations.start');

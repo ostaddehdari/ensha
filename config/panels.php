@@ -48,6 +48,8 @@ return [
             ['label'=>'تنظیمات نوبت‌دهی','slug'=>'appointments-settings','route'=>'centres.appointments-settings.index','centre'=>true,'permission'=>'appointments.manage','icon'=>'ki-filled ki-setting-2'],
             ['section'=>'مالی'],
             ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
+            ['label'=>'قوانین سهم مشاور','slug'=>'compensation-rules','route'=>'centres.compensation-rules.index','centre'=>true,'permission'=>'compensation_rules.view','icon'=>'ki-filled ki-percentage'],
+            ['label'=>'تسویه مشاوران','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
         ],
         'secretary' => [
             ['section'=>'عملیات منشی'],
@@ -69,6 +71,8 @@ return [
             ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
             ['label'=>'نوبت‌ها و مانده‌ها','slug'=>'appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-tick'],
             ['label'=>'مراجعین','slug'=>'clients','route'=>'clients.index','permission'=>'clients.view','icon'=>'ki-filled ki-people'],
+            ['label'=>'قوانین سهم مشاور','slug'=>'compensation-rules','route'=>'centres.compensation-rules.index','centre'=>true,'permission'=>'compensation_rules.view','icon'=>'ki-filled ki-percentage'],
+            ['label'=>'تسویه مشاوران','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
         ],
         'counselor' => [
             ['section'=>'کار من'],
@@ -77,6 +81,7 @@ return [
             ['label'=>'نوبت‌های من','slug'=>'my-appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-tick'],
             ['label'=>'پرونده‌های مشاوره','slug'=>'cases','route'=>'cases.index','permission'=>'cases.view','icon'=>'ki-filled ki-folder'],
             ['label'=>'حضور و غیاب','slug'=>'attendance','route'=>'attendance.index','icon'=>'ki-filled ki-time'],
+            ['label'=>'تسویه‌های من','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
         ],
         'test_manager' => [
             // Test pages are not yet implemented. Keep the navigation usable.
@@ -105,5 +110,7 @@ return [
         ['label' => 'لاگ‌ها و رویدادها', 'slug' => 'audit-logs', 'icon' => 'ki-filled ki-notepad', 'permission' => 'audit_logs.view'],
         ['label' => 'گزارش‌های سامانه', 'slug' => 'reports', 'icon' => 'ki-filled ki-document', 'permission' => 'reports.view'],
         ['label' => 'صندوق و دریافت‌ها', 'slug' => 'finance-cashier', 'icon' => 'ki-filled ki-wallet', 'permission' => 'payments.view'],
+        ['label' => 'قوانین سهم مشاور', 'slug' => 'compensation-rules', 'icon' => 'ki-filled ki-percentage', 'permission' => 'compensation_rules.view'],
+        ['label' => 'تسویه مشاوران', 'slug' => 'settlements', 'icon' => 'ki-filled ki-cheque', 'permission' => 'settlements.view'],
     ],
 ];

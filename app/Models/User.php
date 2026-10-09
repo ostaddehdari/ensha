@@ -79,6 +79,11 @@ class User extends Authenticatable
         return $this->hasMany(PaymentTransaction::class, 'created_by');
     }
 
+    public function counselorSettlements(): HasMany
+    {
+        return $this->hasMany(CounselorSettlement::class, 'counselor_id');
+    }
+
     public function assignedRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');

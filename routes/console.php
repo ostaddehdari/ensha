@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+
 Artisan::command('ensha:about', function () {
     $this->info('Ensha counselling centre foundation');
 })->purpose('Show Ensha application information');
@@ -394,3 +395,44 @@ Artisan::command('ensha:verify-stage09-complete', function () {
     if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
     $this->info('VERIFY_STAGE09_COMPLETE_OK'); return 0;
 })->purpose('Verify Ensha Stage 09 payment ledger, receipts and daily cash register / v0.21.0');
+
+Artisan::command('ensha:verify-stage10-complete', function () {
+    $errors=[];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.22.0') $errors[]='VERSION باید 0.22.0 باشد.';
+    foreach (['compensation_rules','appointment_compensation_snapshots','counselor_settlements','counselor_settlement_items','counselor_settlement_adjustments'] as $table) {
+        if (! Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    }
+    $columns=[
+        'compensation_rules'=>['public_id','centre_id','topic_id','counselor_id','beneficiary','calculation_type','value','version','valid_from','valid_until'],
+        'appointment_compensation_snapshots'=>['appointment_id','rule_snapshot','gross_amount','centre_share_amount','counselor_share_amount','locked_at'],
+        'counselor_settlements'=>['settlement_number','period_start','period_end','status','deductions_amount','bonuses_amount','payable_amount','paid_amount'],
+        'counselor_settlement_items'=>['settlement_id','appointment_id','compensation_snapshot_id','collected_amount','centre_share_amount','counselor_share_amount'],
+    ];
+    foreach ($columns as $table=>$required) foreach ($required as $column) {
+        if (Schema::hasTable($table) && ! Schema::hasColumn($table,$column)) $errors[]="ستون {$table}.{$column} وجود ندارد.";
+    }
+    $permissions=['compensation_rules.view','compensation_rules.manage','compensation_snapshots.view','settlements.view','settlements.manage','settlements.approve','settlements.pay'];
+    if (DB::table('permissions')->where('is_active',true)->whereIn('slug',$permissions)->count()!==count($permissions)) $errors[]='مجوزهای Stage 10 کامل نیستند.';
+    foreach (['centres.compensation-rules.index','centres.compensation-rules.store','centres.compensation-rules.retire','settlements.index','settlements.store','settlements.show','settlements.approve','settlements.pay','settlements.cancel'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    }
+    foreach (['app/Services/CompensationService.php','app/Http/Controllers/CompensationRuleController.php','app/Http/Controllers/CounselorSettlementController.php','resources/views/finance/compensation-rules.blade.php','resources/views/finance/settlements/index.blade.php','resources/views/finance/settlements/show.blade.php','public/css/stage10-settlements.css'] as $file) {
+        if (! file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    }
+    if (Schema::hasTable('appointment_compensation_snapshots')) {
+        $missing=DB::table('appointments as a')->leftJoin('appointment_compensation_snapshots as s','s.appointment_id','=','a.id')->where('a.status','completed')->whereNull('s.id')->count();
+        if ($missing) $errors[]="{$missing} جلسه تکمیل‌شده Snapshot سهم ندارد.";
+        $bad=DB::table('appointment_compensation_snapshots')->whereRaw('gross_amount <> centre_share_amount + counselor_share_amount')->count();
+        if ($bad) $errors[]="{$bad} Snapshot سهم جمع ناسازگار دارد.";
+    }
+    if (Schema::hasTable('counselor_settlements')) {
+        $badTotals=DB::table('counselor_settlements')->whereRaw('payable_amount <> GREATEST(0, counselor_share_amount - deductions_amount + bonuses_amount)')->count();
+        if ($badTotals) $errors[]="{$badTotals} تسویه جمع ناسازگار دارد.";
+    }
+    $managerCount=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')->where('r.slug','manager')->whereIn('p.slug',$permissions)->distinct()->count('p.slug');
+    if ($managerCount!==count($permissions)) $errors[]='دسترسی مدیر برای Stage 10 کامل نیست.';
+    $financeApprove=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')->where('r.slug','finance')->where('p.slug','settlements.approve')->exists();
+    if ($financeApprove) $errors[]='مسئول مالی نباید تأییدکننده تسویه خودش باشد.';
+    if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE10_COMPLETE_OK'); return 0;
+})->purpose('Verify Ensha Stage 10 versioned compensation and counselor settlements / v0.22.0');

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+APP="${1:-/var/www/ensha}"
+PHP_BIN="${PHP_BIN:-/usr/bin/php}"
+[[ -f "$APP/artisan" ]] || { echo 'ENSHA_APP_NOT_FOUND' >&2; exit 1; }
+cd "$APP"
+"$PHP_BIN" artisan ensha:verify-stage10-complete
+[[ "$(redis-cli ping 2>/dev/null)" == PONG ]]
+runuser -u www-data -- test -r "$APP/storage/framework/views"
+echo 'VERIFY_STAGE10_V0220_OK'

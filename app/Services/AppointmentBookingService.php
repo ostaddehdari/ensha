@@ -91,6 +91,7 @@ class AppointmentBookingService
                 $slot = AppointmentSlot::query()->lockForUpdate()->find($appointment->slot_id);
                 if ($slot) $slot->update(['booked_count' => max(0, $slot->booked_count - 1), 'status' => 'available', 'lock_version' => $slot->lock_version + 1]);
             }
+            if ($status === 'completed') app(CompensationService::class)->snapshot($appointment->fresh(), $actorId);
             return $appointment;
         }, 3);
     }
