@@ -9,12 +9,13 @@ class UserPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return $actor->hasPermission('users.view');
+        return $actor->hasPermission('users.view') || $this->managesCredentialsGlobally($actor);
     }
 
     public function view(User $actor, User $target): bool
     {
-        return $actor->hasPermission('users.view') && $this->withinScope($actor, $target);
+        return $this->managesCredentialsGlobally($actor)
+            || ($actor->hasPermission('users.view') && $this->withinScope($actor, $target));
     }
 
     public function create(User $actor): bool
@@ -37,6 +38,12 @@ class UserPolicy
         return $actor->hasPermission('users.update') && $this->canManage($actor, $target);
     }
 
+    public function updatePhone(User $actor, User $target): bool
+    {
+        return $this->managesCredentialsGlobally($actor)
+            || ($actor->hasPermission('users.update') && $this->canManage($actor, $target));
+    }
+
     public function changeStatus(User $actor, User $target): bool
     {
         return $actor->hasPermission('users.change_status')
@@ -46,9 +53,12 @@ class UserPolicy
 
     public function resetPassword(User $actor, User $target): bool
     {
-        return $actor->hasPermission('users.reset_password')
-            && $actor->isNot($target)
-            && $this->canManage($actor, $target);
+        if ($actor->is($target)) {
+            return false;
+        }
+
+        return $this->managesCredentialsGlobally($actor)
+            || ($actor->hasPermission('users.reset_password') && $this->canManage($actor, $target));
     }
 
     public function revokeSessions(User $actor, User $target): bool
@@ -106,5 +116,10 @@ class UserPolicy
             ->assignableBy($actor)
             ->whereKey($target->role_id)
             ->exists();
+    }
+
+    private function managesCredentialsGlobally(User $actor): bool
+    {
+        return $actor->hasPermission(User::GLOBAL_CREDENTIAL_PERMISSION);
     }
 }

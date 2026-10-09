@@ -245,6 +245,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::patch('/users/{user}/status', [UserController::class, 'changeStatus'])->middleware('throttle:sensitive')->name('users.status');
         Route::patch('/users/{user}/password', [UserController::class, 'resetPassword'])->middleware('throttle:sensitive')->name('users.password');
+        Route::patch('/users/{user}/phone', [UserController::class, 'updatePhone'])->middleware('throttle:sensitive')->name('users.phone');
         Route::patch('/users/{user}/sessions/revoke', [UserSessionController::class, 'revokeAll'])->middleware('throttle:sensitive')->name('users.sessions.revoke-all');
         Route::patch('/users/{user}/sessions/{userSession}/revoke', [UserSessionController::class, 'revoke'])->middleware('throttle:sensitive')->name('users.sessions.revoke');
         Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'start'])->middleware('throttle:sensitive')->name('users.impersonate');

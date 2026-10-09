@@ -76,6 +76,16 @@
         </details>
         @endcan
 
+        @can('updatePhone', $user)
+        <details class="ensha-card ensha-collapsible">
+            <summary><span><i class="ki-filled ki-phone"></i><strong>تغییر شماره تلفن ورود</strong><small>تغییر فقط شماره تلفن و خروج کاربر از همه دستگاه‌ها</small></span><i class="ki-filled ki-down"></i></summary>
+            <form method="POST" action="{{ route('users.phone', $user) }}" class="ensha-inline-security-form" data-confirm="شماره تلفن ورود این کاربر تغییر کند؟ همه نشست‌های قبلی او پایان می‌یابد.">@csrf @method('PATCH')
+                <label>شماره تلفن جدید <input type="tel" name="phone" value="{{ old('phone', $user->phone) }}" dir="ltr" inputmode="tel" maxlength="14" required></label>
+                <button class="ensha-danger-btn" type="submit"><i class="ki-filled ki-check"></i> ثبت شماره جدید</button>
+            </form>
+        </details>
+        @endcan
+
         @if($canViewSessions)
         <section class="ensha-card">
             <div class="ensha-card-head">

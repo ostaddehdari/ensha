@@ -12,6 +12,7 @@ use App\Support\Audit;
 use App\Support\ProfileForm;
 use App\Support\PhoneNormalizer;
 use App\Models\ProfileField;
+use App\Rules\IranianMobile;
 use App\Support\SessionRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +31,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
         $actor = $request->user();
-        $baseQuery = User::query()->visibleTo($actor);
+        $baseQuery = $this->visibleUserQuery($actor, true);
 
         $stats = [
             'total' => (clone $baseQuery)->count(),
@@ -41,14 +42,14 @@ class UserController extends Controller
             'new_this_month' => (clone $baseQuery)->where('created_at', '>=', now()->startOfMonth())->count(),
         ];
 
-        $users = $this->filteredQuery($request, $actor)
+        $users = $this->filteredQuery($request, $actor, false, true)
             ->paginate(20)
             ->withQueryString();
 
         return view('users.index', [
             'users' => $users,
             'roles' => Role::active()->orderBy('sort_order')->get(),
-            'centres' => $actor->isSuperAdmin()
+            'centres' => $this->hasGlobalCredentialScope($actor)
                 ? Centre::query()->where('is_active', true)->orderBy('name')->get()
                 : Centre::query()->whereKey($actor->centre_id)->get(),
             'stats' => $stats,
@@ -306,6 +307,37 @@ class UserController extends Controller
         return back()->with('success', 'رمز موقت ثبت و همه نشست‌های قبلی کاربر پایان داده شد.');
     }
 
+    public function updatePhone(Request $request, User $user): RedirectResponse
+    {
+        $this->authorize('updatePhone', $user);
+        $request->merge(['phone' => PhoneNormalizer::normalize((string) $request->input('phone'))]);
+        $data = $request->validate([
+            'phone' => ['required', new IranianMobile, Rule::unique('users', 'phone')->ignore($user->id)],
+        ], [], ['phone' => 'شماره تلفن']);
+
+        $before = $user->phone;
+        if ($before === $data['phone']) {
+            return back()->with('success', 'شماره تلفن تغییری نکرد.');
+        }
+
+        $revokedCount = DB::transaction(function () use ($user, $data) {
+            $user->forceFill(['phone' => $data['phone']])->save();
+
+            return SessionRegistry::invalidateAll($user, 'phone_changed_by_credential_administrator');
+        });
+
+        Audit::record(
+            'تغییر شماره تلفن کاربر توسط مدیر اعتبارنامه',
+            $request,
+            'warning',
+            ['target_user_id' => $user->id, 'before' => $before, 'after' => $data['phone'], 'revoked_sessions' => $revokedCount],
+            $user,
+            'user.phone_updated_by_credential_administrator',
+        );
+
+        return back()->with('success', 'شماره تلفن تغییر کرد و همه نشست‌های قبلی کاربر پایان یافت.');
+    }
+
     public function destroy(Request $request, User $user): RedirectResponse
     {
         $this->authorize('delete', $user);
@@ -364,12 +396,16 @@ class UserController extends Controller
             ->with('success', 'حساب بازیابی شد و برای بررسی امنیتی در وضعیت غیرفعال قرار گرفت.');
     }
 
-    private function filteredQuery(Request $request, User $actor, bool $onlyTrashed = false): Builder
+    private function filteredQuery(
+        Request $request,
+        User $actor,
+        bool $onlyTrashed = false,
+        bool $allowGlobalCredentialDirectory = false,
+    ): Builder
     {
         $query = $onlyTrashed ? User::onlyTrashed() : User::query();
 
-        return $query
-            ->visibleTo($actor)
+        return $this->visibleUserQuery($actor, $allowGlobalCredentialDirectory, $query)
             ->with(['assignedRole', 'centre'])
             ->when($request->filled('q'), function (Builder $query) use ($request) {
                 $normalized = PhoneNormalizer::normalizeDigits(trim((string) $request->input('q')));
@@ -387,7 +423,7 @@ class UserController extends Controller
                 });
             })
             ->when($request->filled('role_id'), fn (Builder $query) => $query->where('role_id', $request->integer('role_id')))
-            ->when($request->filled('centre_id') && $actor->isSuperAdmin(), fn (Builder $query) => $query->where('centre_id', $request->integer('centre_id')))
+            ->when($request->filled('centre_id') && $this->hasGlobalCredentialScope($actor), fn (Builder $query) => $query->where('centre_id', $request->integer('centre_id')))
             ->when(in_array($request->input('status'), ['active', 'inactive', 'blocked'], true), fn (Builder $query) => $query->where('status', $request->input('status')))
             ->when(
                 $request->input('sort') === 'oldest',
@@ -465,5 +501,22 @@ class UserController extends Controller
         $value = (string) $value;
 
         return preg_match('/^[\x00-\x20]*[=+\-@]/u', $value) === 1 ? "'".$value : $value;
+    }
+
+    private function hasGlobalCredentialScope(User $actor): bool
+    {
+        return $actor->isSuperAdmin() || $actor->hasPermission(User::GLOBAL_CREDENTIAL_PERMISSION);
+    }
+
+    private function visibleUserQuery(
+        User $actor,
+        bool $allowGlobalCredentialDirectory,
+        ?Builder $query = null,
+    ): Builder {
+        $query ??= User::query();
+
+        return $allowGlobalCredentialDirectory && $this->hasGlobalCredentialScope($actor)
+            ? $query
+            : $query->visibleTo($actor);
     }
 }

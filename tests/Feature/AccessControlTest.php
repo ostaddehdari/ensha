@@ -33,7 +33,7 @@ class AccessControlTest extends TestCase
         $this->actingAs($secretary)->get(route('permissions.index'))->assertForbidden();
     }
 
-    public function test_manager_only_sees_users_from_own_centre(): void
+    public function test_manager_sees_global_user_directory_for_credential_management(): void
     {
         $main = Centre::where('code', 'ENSHA-MAIN')->firstOrFail();
         $other = Centre::create(['name' => 'مرکز دوم', 'code' => 'SECOND', 'is_active' => true]);
@@ -43,7 +43,7 @@ class AccessControlTest extends TestCase
 
         $response = $this->actingAs($manager)->get(route('users.index'));
 
-        $response->assertOk()->assertSee('کاربر مرکز اول')->assertDontSee('کاربر مرکز دوم');
+        $response->assertOk()->assertSee('کاربر مرکز اول')->assertSee('کاربر مرکز دوم');
     }
 
     public function test_manager_creates_staff_only_in_own_centre(): void

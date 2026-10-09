@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,6 +16,8 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes;
+
+    public const GLOBAL_CREDENTIAL_PERMISSION = 'users.manage_credentials_globally';
 
     protected ?array $permissionSlugCache = null;
 
@@ -104,6 +107,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id');
     }
 
+    public function directPermissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user')->withTimestamps();
+    }
+
     public function centre(): BelongsTo
     {
         return $this->belongsTo(Centre::class);
@@ -188,15 +196,18 @@ class User extends Authenticatable
             return true;
         }
 
-        if (! $this->assignedRole || ! $this->assignedRole->is_active) {
-            return false;
-        }
-
         if ($this->permissionSlugCache === null) {
-            $this->permissionSlugCache = $this->assignedRole->permissions()
+            $rolePermissions = $this->assignedRole && $this->assignedRole->is_active
+                ? $this->assignedRole->permissions()
+                    ->where('permissions.is_active', true)
+                    ->pluck('permissions.slug')
+                    ->all()
+                : [];
+            $directPermissions = $this->directPermissions()
                 ->where('permissions.is_active', true)
                 ->pluck('permissions.slug')
                 ->all();
+            $this->permissionSlugCache = array_values(array_unique([...$rolePermissions, ...$directPermissions]));
         }
 
         return in_array($permission, $this->permissionSlugCache, true);

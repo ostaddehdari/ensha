@@ -5,7 +5,7 @@
     <div>
         <span class="ensha-eyebrow">هویت و دسترسی</span>
         <h2>مدیریت کاربران</h2>
-        <p>{{ auth()->user()->isSuperAdmin() ? 'مدیریت متمرکز حساب‌ها، وضعیت امنیتی و دسترسی کاربران' : 'مدیریت کاربران مرکز '.(auth()->user()->centre?->name ?? '') }}</p>
+        <p>{{ auth()->user()->isSuperAdmin() || auth()->user()->hasPermission(App\Models\User::GLOBAL_CREDENTIAL_PERMISSION) ? 'مدیریت متمرکز اعتبارنامه کاربران همه مراکز' : 'مدیریت کاربران مرکز '.(auth()->user()->centre?->name ?? '') }}</p>
     </div>
     <div class="ensha-heading-actions">
         @can('viewDeleted', App\Models\User::class)
@@ -35,7 +35,7 @@
             <option value="">همه نقش‌ها</option>
             @foreach($roles as $role)<option value="{{ $role->id }}" @selected((string) request('role_id') === (string) $role->id)>{{ $role->name }}</option>@endforeach
         </select>
-        @if(auth()->user()->isSuperAdmin())
+        @if(auth()->user()->isSuperAdmin() || auth()->user()->hasPermission(App\Models\User::GLOBAL_CREDENTIAL_PERMISSION))
             <select name="centre_id" aria-label="فیلتر مرکز"><option value="">همه مراکز</option>@foreach($centres as $centre)<option value="{{ $centre->id }}" @selected((string) request('centre_id') === (string) $centre->id)>{{ $centre->name }}</option>@endforeach</select>
         @endif
         <select name="status" aria-label="فیلتر وضعیت">
