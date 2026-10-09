@@ -57,7 +57,9 @@ class Stage06SchedulingTest extends TestCase
         $appointment=app(AppointmentBookingService::class)->book($slot->id,$client->id,null,$users['manager']->id,null,
             ['discount_id'=>$discount,'paid_amount'=>100000]);
         $this->assertMatchesRegularExpression('/^[1-9][0-9]{12}$/',$appointment->public_id);
-        $this->assertSame(140000,$appointment->balance_amount);
+        // Since Stage 09, booking never records money directly; payments are posted through the immutable ledger.
+        $this->assertSame(240000,$appointment->balance_amount);
+        $this->assertSame(0,$appointment->paid_amount);
         $this->assertNotNull($appointment->case_id);
         $this->assertDatabaseHas('cases',['id'=>$appointment->case_id,'status'=>'draft']);
     }

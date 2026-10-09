@@ -211,8 +211,40 @@ class SecretaryCalendarController extends Controller
             $policy=BookingPolicy::forCentre($centreId);
             if ($start->isPast() && ! $policy->allow_past_bookings) throw ValidationException::withMessages(['start'=>'انتقال نوبت به زمان گذشته غیرفعال است.']);
             $updated=DB::transaction(function () use ($appointment,$data,$start,$end,$policy,$centreId,$request) {
+                $currentSlot = AppointmentSlot::whereKey($appointment->slot_id)->lockForUpdate()->firstOrFail();
+                $sameSlot = (int) $currentSlot->counselor_id === (int) $data['counselor_id']
+                    && (int) $currentSlot->topic_id === (int) $appointment->topic_id
+                    && $currentSlot->mode === $appointment->mode
+                    && $currentSlot->starts_at->equalTo($start);
+
+                // DayPilot resize keeps the same slot and only changes its end.
+                // Do not create a second slot with the same unique key.
+                if ($sameSlot) {
+                    $overlap = Appointment::where('counselor_id', $data['counselor_id'])
+                        ->where('id', '!=', $appointment->id)
+                        ->whereNotIn('status', ['cancelled', 'no_show'])
+                        ->where('starts_at', '<', $end)->where('ends_at', '>', $start)
+                        ->exists();
+                    if ($overlap) {
+                        throw ValidationException::withMessages(['end' => 'طول جدید با نوبت دیگری تداخل دارد.']);
+                    }
+                    $currentSlot->update([
+                        'slot_date' => $start->toDateString(),
+                        'ends_at' => $end,
+                        'lock_version' => $currentSlot->lock_version + 1,
+                    ]);
+                    $appointment->update([
+                        'starts_at' => $start,
+                        'ends_at' => $end,
+                        'duration_minutes' => $start->diffInMinutes($end),
+                        'updated_by' => $request->user()->id,
+                    ]);
+                    return $appointment->fresh();
+                }
+
                 $target=AppointmentSlot::where('centre_id',$centreId)->where('counselor_id',$data['counselor_id'])
-                    ->where('topic_id',$appointment->topic_id)->where('starts_at',$start)->where('mode',$appointment->mode)->lockForUpdate()->first();
+                    ->where('topic_id',$appointment->topic_id)->where('starts_at',$start)->where('mode',$appointment->mode)
+                    ->where('id','!=',$appointment->slot_id)->lockForUpdate()->first();
                 if ($target && (! $target->ends_at->equalTo($end) || $target->status!=='available')) throw ValidationException::withMessages(['start'=>'زمان مقصد قبلاً اشغال شده است.']);
                 if (! $target) {
                     $roomId=null;

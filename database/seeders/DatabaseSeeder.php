@@ -48,6 +48,11 @@ class DatabaseSeeder extends Seeder
                 $user->national_id = $data['national_id'];
             }
             $user->saveQuietly();
+
+            $user->roleAssignments()->firstOrCreate([
+                'role_id' => $role->id,
+                'centre_id' => $data['role'] === 'super_admin' ? null : $defaultCentre->id,
+            ]);
         }
 
         $fields = [

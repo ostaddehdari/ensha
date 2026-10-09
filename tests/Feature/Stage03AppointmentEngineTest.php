@@ -28,7 +28,9 @@ class Stage03AppointmentEngineTest extends TestCase
         $second = $service->create(['centre_id'=>$centre->id,'topic_id'=>$topic,'price'=>1200000,'counselor_pay'=>600000,'currency'=>'IRR','valid_from'=>'2026-11-01','created_by'=>$manager->id]);
         $this->assertSame(1, $first->version);
         $this->assertSame(2, $second->version);
-        $this->assertDatabaseHas('service_tariffs', ['id'=>$first->id,'valid_until'=>'2026-10-31','is_active'=>false]);
+        $first->refresh();
+        $this->assertSame('2026-10-31', $first->valid_until?->toDateString());
+        $this->assertFalse($first->is_active);
     }
 
     public function test_booking_uses_unique_seat_and_status_history(): void

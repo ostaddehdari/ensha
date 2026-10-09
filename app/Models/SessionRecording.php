@@ -17,6 +17,8 @@ class SessionRecording extends Model
         'transcript_status', 'transcript_text', 'transcript_language', 'transcription_provider',
         'transcription_error', 'transcribed_at', 'transcript_finalized_by', 'transcript_finalized_at',
         'transcript_hash', 'consent_snapshot', 'recorded_at', 'completed_at', 'created_by',
+        'legal_hold', 'legal_hold_reason', 'legal_hold_by', 'legal_hold_at', 'retention_expires_at',
+        'purged_at', 'purged_by', 'purge_reason',
     ];
 
     protected function casts(): array
@@ -31,6 +33,10 @@ class SessionRecording extends Model
             'consent_snapshot' => 'array',
             'transcribed_at' => 'datetime',
             'transcript_finalized_at' => 'datetime',
+            'legal_hold' => 'boolean',
+            'legal_hold_at' => 'datetime',
+            'retention_expires_at' => 'datetime',
+            'purged_at' => 'datetime',
             'recorded_at' => 'datetime',
             'completed_at' => 'datetime',
         ];

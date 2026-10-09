@@ -35,16 +35,25 @@ class PayrollReportController extends Controller
     public function show(Request $request,StaffPayrollRun $run)
     {
         $this->authorizeRun($request,$run,'payroll.view');
-        $run->load(['items.staff','creator','locker']);
+        $run->load(['items.staff','creator','locker','submitter','approver','payer','voider','audits.actor']);
         return view('reports.payroll-run',compact('run'));
     }
 
     public function lock(Request $request,StaffPayrollRun $run,PayrollService $payroll)
     {
-        $this->authorizeRun($request,$run,'payroll.manage');
-        $payroll->lock($run,$request->user());
-        return back()->with('success','دوره حقوق قفل شد و دیگر قابل تغییر نیست.');
+        $this->authorizeRun($request,$run,'payroll.submit');
+        $payroll->submit($run,$request->user());
+        return back()->with('success','دوره برای تأیید ارسال شد.');
     }
+
+    public function approve(Request $request,StaffPayrollRun $run,PayrollService $payroll)
+    { $this->authorizeRun($request,$run,'payroll.approve'); $payroll->approve($run,$request->user()); return back()->with('success','دوره حقوق تأیید و قفل شد.'); }
+
+    public function pay(Request $request,StaffPayrollRun $run,PayrollService $payroll)
+    { $this->authorizeRun($request,$run,'payroll.pay'); $data=$request->validate(['payment_reference'=>'required|string|max:120']); $payroll->pay($run,$request->user(),$data['payment_reference']); return back()->with('success','پرداخت حقوق ثبت شد.'); }
+
+    public function void(Request $request,StaffPayrollRun $run,PayrollService $payroll)
+    { $this->authorizeRun($request,$run,'payroll.void'); $data=$request->validate(['reason'=>'required|string|min:10|max:2000']); $payroll->void($run,$request->user(),$data['reason']); return back()->with('success','دوره با ثبت سابقه حسابرسی ابطال شد.'); }
 
     public function exportLive(Request $request,PayrollService $payroll,SimpleXlsxExporter $xlsx,JalaliDate $jalali)
     {

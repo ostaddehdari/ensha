@@ -7,6 +7,7 @@ use App\Models\Appointment;
 use App\Models\ClientConsent;
 use App\Models\CounsellingSession;
 use App\Models\SessionRecording;
+use App\Models\CentreIntegration;
 use App\Services\ClinicalAudioVault;
 use App\Support\Audit;
 use Illuminate\Http\Request;
@@ -192,6 +193,7 @@ class SessionRecordingController extends Controller
                 'received_chunks' => $data['chunk_count'],
                 'status' => 'ready',
                 'completed_at' => now(),
+                'retention_expires_at' => now()->addDays((int) config('clinical_audio.retention_days',365)),
             ]);
             Storage::disk('local')->deleteDirectory($chunkDirectory);
         } catch (\Throwable $e) {
@@ -209,6 +211,35 @@ class SessionRecordingController extends Controller
         ], $recording, 'session.recording.completed');
 
         return response()->json(['message' => 'ضبط با موفقیت و به‌صورت رمزگذاری‌شده ذخیره شد.', 'reload' => true]);
+    }
+
+    public function retention(Request $request)
+    {
+        abort_unless($request->user()->hasPermission('session_recordings.retention'),403);
+        $rows=SessionRecording::with(['appointment.client.user','counselor'])->where('centre_id',$request->user()->centre_id)
+            ->whereNotNull('retention_expires_at')->orderBy('retention_expires_at')->paginate(50);
+        $summary=['expired'=>SessionRecording::where('centre_id',$request->user()->centre_id)->where('legal_hold',false)->whereNull('purged_at')->where('retention_expires_at','<=',now())->count(),
+            'held'=>SessionRecording::where('centre_id',$request->user()->centre_id)->where('legal_hold',true)->count(),
+            'purged'=>SessionRecording::withTrashed()->where('centre_id',$request->user()->centre_id)->whereNotNull('purged_at')->count()];
+        return view('counselor.recording-retention',compact('rows','summary'));
+    }
+
+    public function legalHold(Request $request,SessionRecording $recording)
+    {
+        abort_unless($request->user()->hasPermission('session_recordings.retention')&&(int)$recording->centre_id===(int)$request->user()->centre_id,403);
+        $data=$request->validate(['reason'=>'required|string|min:10|max:2000']);
+        $recording->update(['legal_hold'=>true,'legal_hold_reason'=>$data['reason'],'legal_hold_by'=>$request->user()->id,'legal_hold_at'=>now()]);
+        DB::table('session_recording_retention_audits')->insert(['session_recording_id'=>$recording->id,'centre_id'=>$recording->centre_id,'actor_id'=>$request->user()->id,'action'=>'legal_hold','reason'=>$data['reason'],'file_sha256'=>$recording->sha256,'created_at'=>now(),'updated_at'=>now()]);
+        return back()->with('success','Legal Hold فعال شد؛ فایل با Retention خودکار حذف نمی‌شود.');
+    }
+
+    public function releaseLegalHold(Request $request,SessionRecording $recording)
+    {
+        abort_unless($request->user()->hasPermission('session_recordings.retention')&&(int)$recording->centre_id===(int)$request->user()->centre_id,403);
+        $data=$request->validate(['reason'=>'required|string|min:10|max:2000']);
+        DB::table('session_recording_retention_audits')->insert(['session_recording_id'=>$recording->id,'centre_id'=>$recording->centre_id,'actor_id'=>$request->user()->id,'action'=>'legal_hold_released','reason'=>$data['reason'],'file_sha256'=>$recording->sha256,'created_at'=>now(),'updated_at'=>now()]);
+        $recording->update(['legal_hold'=>false,'legal_hold_reason'=>null,'legal_hold_by'=>null,'legal_hold_at'=>null]);
+        return back()->with('success','Legal Hold برداشته شد.');
     }
 
     public function stream(Request $request, SessionRecording $recording, ClinicalAudioVault $vault)
@@ -242,7 +273,9 @@ class SessionRecordingController extends Controller
         $this->authorizeRecordingTranscript($request, $recording);
         abort_unless($recording->isReady(), 409, 'فایل صوت آماده پیاده‌سازی نیست.');
         abort_if($recording->transcriptIsFinalized(), 409, 'متن این ضبط نهایی شده است.');
-        abort_unless(filled(config('clinical_audio.transcription.endpoint')), 422, 'سرویس تبدیل صوت به متن تنظیم نشده است؛ متن را می‌توانید دستی ثبت کنید.');
+        $centreWhisper=CentreIntegration::where('centre_id',$recording->centre_id)->where('driver','whisper')->where('is_active',true)->first();
+        $hasCentreWhisper=filled(data_get($centreWhisper?->settings,'endpoint'));
+        abort_unless($hasCentreWhisper||filled(config('clinical_audio.transcription.endpoint')), 422, 'سرویس تبدیل صوت به متن تنظیم نشده است؛ متن را می‌توانید دستی ثبت کنید.');
         abort_if(in_array($recording->transcript_status, ['queued', 'processing'], true), 409, 'درخواست پیاده‌سازی قبلاً در صف قرار گرفته است.');
         $recording->update(['transcript_status' => 'queued', 'transcription_error' => null]);
         TranscribeSessionRecording::dispatch($recording->id)->onQueue('clinical');
@@ -278,6 +311,7 @@ class SessionRecordingController extends Controller
     public function destroy(Request $request, Appointment $appointment, SessionRecording $recording)
     {
         $this->authorizeRecordingManage($request, $appointment, $recording);
+        abort_if($recording->legal_hold,409,'این ضبط تحت Legal Hold است و حذف آن مجاز نیست.');
         abort_if($recording->transcriptIsFinalized(), 409, 'ضبط دارای متن نهایی است و قابل حذف مستقیم نیست.');
         $metadata = ['recording_id' => $recording->public_id, 'sha256' => $recording->sha256, 'appointment_id' => $appointment->id];
         if ($recording->path) {
@@ -285,6 +319,7 @@ class SessionRecordingController extends Controller
         }
         Storage::disk('local')->deleteDirectory('ensha-audio-chunks/'.$recording->public_id);
         $recording->update(['status' => 'deleted']);
+        DB::table('session_recording_retention_audits')->insert(['session_recording_id'=>$recording->id,'centre_id'=>$recording->centre_id,'actor_id'=>$request->user()->id,'action'=>'manual_deleted','reason'=>'حذف دستی مجاز توسط مشاور','file_sha256'=>$recording->sha256,'metadata'=>json_encode($metadata,JSON_UNESCAPED_UNICODE),'created_at'=>now(),'updated_at'=>now()]);
         $recording->delete();
         Audit::record('حذف ضبط جلسه', $request, 'warning', $metadata, $appointment, 'session.recording.deleted');
         return back()->with('success', 'ضبط جلسه حذف شد.');

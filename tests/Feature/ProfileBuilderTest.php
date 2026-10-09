@@ -10,7 +10,10 @@ class ProfileBuilderTest extends TestCase {
  use RefreshDatabase;
  private function account(string $role, string $phone): User {
   $r=Role::where('slug',$role)->firstOrFail();
-  return User::create(['first_name'=>'کاربر','last_name'=>'نمونه','name'=>'کاربر نمونه','phone'=>$phone,'national_id'=>'1234567891','password'=>'StrongPass123!','role'=>$role,'role_id'=>$r->id,'centre_id'=>$r->scope==='global'?null:Centre::where('code','ENSHA-MAIN')->value('id'),'is_active'=>true,'status'=>'active']);
+  $centreId=$r->scope==='global'?null:Centre::where('code','ENSHA-MAIN')->value('id');
+  $user=User::create(['first_name'=>'کاربر','last_name'=>'نمونه','name'=>'کاربر نمونه','phone'=>$phone,'national_id'=>null,'password'=>'StrongPass123!','role'=>$role,'role_id'=>$r->id,'centre_id'=>$centreId,'is_active'=>true,'status'=>'active']);
+  $user->roleAssignments()->create(['role_id'=>$r->id,'centre_id'=>$centreId]);
+  return $user;
  }
  public function test_builder_requires_permission_and_reorder_cannot_move_another_role(): void {
   $admin=$this->account('super_admin','09128880001'); $secretary=$this->account('secretary','09128880002');

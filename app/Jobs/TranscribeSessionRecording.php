@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use App\Models\CentreIntegration;
 
 class TranscribeSessionRecording implements ShouldQueue
 {
@@ -31,7 +32,8 @@ class TranscribeSessionRecording implements ShouldQueue
         if ($recording->transcriptIsFinalized()) {
             return;
         }
-        $endpoint = (string) config('clinical_audio.transcription.endpoint');
+        $integration=CentreIntegration::where('centre_id',$recording->centre_id)->where('driver','whisper')->where('is_active',true)->first();
+        $endpoint = (string) (data_get($integration?->settings,'endpoint') ?: config('clinical_audio.transcription.endpoint'));
         if ($endpoint === '') {
             throw new RuntimeException('نشانی سرویس تبدیل صوت به متن تنظیم نشده است.');
         }
@@ -47,8 +49,9 @@ class TranscribeSessionRecording implements ShouldQueue
             $stream = fopen($temporary, 'rb');
             $request = Http::timeout((int) config('clinical_audio.transcription.timeout', 900))
                 ->acceptJson();
-            if (filled(config('clinical_audio.transcription.token'))) {
-                $request = $request->withToken((string) config('clinical_audio.transcription.token'));
+            $token=(string)($integration?->secret('api_key') ?: config('clinical_audio.transcription.token'));
+            if (filled($token)) {
+                $request = $request->withToken($token);
             }
             $response = $request->attach(
                 'file',
@@ -56,7 +59,7 @@ class TranscribeSessionRecording implements ShouldQueue
                 $recording->original_name ?: 'session-audio.webm',
                 ['Content-Type' => $recording->mime_type ?: 'audio/webm']
             )->post($endpoint, [
-                'model' => config('clinical_audio.transcription.model', 'whisper-1'),
+                'model' => data_get($integration?->settings,'model') ?: config('clinical_audio.transcription.model', 'whisper-1'),
                 'language' => $recording->transcript_language ?: 'fa',
                 'response_format' => 'json',
             ])->throw();

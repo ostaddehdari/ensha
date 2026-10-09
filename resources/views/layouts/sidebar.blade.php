@@ -44,6 +44,8 @@
             'settlements' => request()->routeIs('settlements.*'),
             'financial-reports' => request()->routeIs('reports.financial.*'),
             'payroll-reports' => request()->routeIs('reports.payroll.*'),
+            'integrations' => request()->routeIs('centres.integrations.*'),
+            'audio-retention' => request()->routeIs('recordings.retention.*'),
             'counselor-workspace' => request()->routeIs('counselor.workspace') || request()->routeIs('counselor.reports.*') || request()->routeIs('counselor.sessions.*'),
             'appointments', 'my-appointments', 'my-calendar', 'new-appointment' => request()->routeIs('appointments.*'),
             default => request()->routeIs('module') && request()->route('module') === $slug,
@@ -94,6 +96,8 @@
                         elseif (($item['slug'] ?? '') === 'settlements') $href = route('settlements.index');
                         elseif (($item['slug'] ?? '') === 'financial-reports') $href = route('reports.financial.index');
                         elseif (($item['slug'] ?? '') === 'payroll-reports') $href = route('reports.payroll.index');
+                        elseif (($item['slug'] ?? '') === 'integrations') $href = auth()->user()->centre_id ? route('centres.integrations.index',auth()->user()->centre_id) : route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'audio-retention') $href = route('recordings.retention.index');
                         elseif (($item['slug'] ?? '') === 'counselor-workspace') $href = route('counselor.workspace');
                         elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);
                         $isActive = $activeFor($item['slug'] ?? '');

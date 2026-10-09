@@ -9,7 +9,9 @@ class ProfileDraftTest extends TestCase {
  use RefreshDatabase;
  private function admin(): User {
   $role=Role::where('slug','super_admin')->firstOrFail();
-  return User::create(['first_name'=>'ادمین','last_name'=>'آزمایشی','name'=>'ادمین آزمایشی','phone'=>'09127778888','national_id'=>'1234567891','password'=>'StrongPass123!','role'=>'super_admin','role_id'=>$role->id,'is_active'=>true,'status'=>'active']);
+  $user=User::create(['first_name'=>'ادمین','last_name'=>'آزمایشی','name'=>'ادمین آزمایشی','phone'=>'09127778888','national_id'=>'1234567891','password'=>'StrongPass123!','role'=>'super_admin','role_id'=>$role->id,'is_active'=>true,'status'=>'active']);
+  $user->roleAssignments()->create(['role_id'=>$role->id,'centre_id'=>null]);
+  return $user;
  }
  public function test_single_save_persists_all_tabs_and_option_labels_with_values(): void {
   $admin=$this->admin();

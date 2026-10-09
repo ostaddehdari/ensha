@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -44,6 +45,15 @@ class User extends Authenticatable
     }
 
     public function roleAssignments(): HasMany { return $this->hasMany(UserRoleCentre::class); }
+
+    /**
+     * ApplyActiveRole injects the session-selected assignment at request time.
+     * The relation definition keeps profile views safe when it is not injected.
+     */
+    public function activeAssignment(): HasOne
+    {
+        return $this->hasOne(UserRoleCentre::class);
+    }
 
     public function getAvatarUrlAttribute(): ?string {
         return $this->avatar_path ? asset('storage/'.$this->avatar_path) : null;

@@ -18,13 +18,20 @@ class SelfProfileTest extends TestCase
     {
         $record = Role::where('slug', $role)->firstOrFail();
 
-        return User::create([
+        $user = User::create([
             'first_name' => 'سارا', 'last_name' => 'آزمایشی', 'name' => 'سارا آزمایشی',
             'phone' => $phone, 'national_id' => $nationalId, 'password' => 'StrongPass123!',
             'role' => $role, 'role_id' => $record->id,
             'centre_id' => $record->scope === 'global' ? null : Centre::where('code', 'ENSHA-MAIN')->value('id'),
             'is_active' => true, 'status' => 'active', 'must_change_password' => false,
         ]);
+
+        $user->roleAssignments()->create([
+            'role_id' => $record->id,
+            'centre_id' => $record->scope === 'global' ? null : $user->centre_id,
+        ]);
+
+        return $user;
     }
 
     public function test_user_edits_common_and_role_fields_but_not_identity_or_role(): void

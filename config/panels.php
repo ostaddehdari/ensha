@@ -52,6 +52,8 @@ return [
             ['label'=>'تسویه مشاوران','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
             ['label'=>'گزارش‌های مالی','slug'=>'financial-reports','route'=>'reports.financial.index','permission'=>'finance.analytics.view','icon'=>'ki-filled ki-chart-line-up'],
             ['label'=>'کارکرد و حقوق','slug'=>'payroll-reports','route'=>'reports.payroll.index','permission'=>'payroll.view','icon'=>'ki-filled ki-time'],
+            ['label'=>'اتصالات خارجی','slug'=>'integrations','route'=>'centres.integrations.index','centre'=>true,'permission'=>'integrations.manage','icon'=>'ki-filled ki-data'],
+            ['label'=>'نگهداری صوت','slug'=>'audio-retention','route'=>'recordings.retention.index','permission'=>'session_recordings.retention','icon'=>'ki-filled ki-shield-tick'],
         ],
         'secretary' => [
             ['section'=>'عملیات منشی'],

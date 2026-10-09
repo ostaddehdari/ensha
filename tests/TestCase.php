@@ -2,9 +2,17 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
-    // Laravel برنامه را از bootstrap/app.php بارگذاری می‌کند.
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Feature requests must exercise authorization and business middleware,
+        // but deployment maintenance mode must not turn every test response into 503.
+        $this->withoutMiddleware(PreventRequestsDuringMaintenance::class);
+    }
 }

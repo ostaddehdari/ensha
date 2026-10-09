@@ -6,12 +6,12 @@
   const form = $('[data-booking]', drawer);
   const error = $('[data-error]');
   const loading = $('[data-loading]');
-  if (!drawer || !form || !window.DayPilot?.Calendar) {
+  if (!drawer || !form || !window.DayPilot?.Calendar || !window.DayPilot?.Month) {
     error.textContent = 'تقویم بارگذاری نشد. صفحه را تازه کنید؛ در صورت تکرار، فایل DayPilot و خطای مرورگر را بررسی کنید.';
     if (loading) loading.hidden = true;
     return;
   }
-  const state = {date: new Date(), month: new Date(), view: 'day', resources: [], start: null, counselor: null};
+  const state = {date: new Date(), month: new Date(), view: 'day', resources: [], start: null, counselor: null, filters:{counselor_id:'',topic_id:'',status:''}};
   const pad = value => String(value).padStart(2, '0');
   const ymd = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   const local = iso => {const date = new Date(iso); return `${ymd(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;};
@@ -66,6 +66,15 @@
   }
   $('[data-month-prev]').onclick=()=>shiftMonth(-1);
   $('[data-month-next]').onclick=()=>shiftMonth(1);
+  async function persistMove(id,start,end,counselor) {
+    return json(`${root.dataset.move}/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':root.dataset.csrf},body:JSON.stringify({start,end,counselor_id:counselor})});
+  }
+  async function move(args,resize=false) {
+    args.preventDefault(); if(root.dataset.manage!=='1') return;
+    const counselor=args.newResource||args.e.data.resource;
+    try {await persistMove(args.e.data.id,args.newStart.toString(),args.newEnd.toString(),counselor);await load();}
+    catch(e){error.textContent=e.message;await load();}
+  }
   const dp = new DayPilot.Calendar('stage06-daypilot', {
     viewType:'Resources', startDate:ymd(state.date), locale:'fa-ir',
     // Calendar Lite accepts Full, BusinessHours, and BusinessHoursNoScroll.
@@ -75,17 +84,25 @@
     dayBeginsHour:8, dayEndsHour:21, businessBeginsHour:8, businessEndsHour:16, cellDuration:15,
     onTimeRangeSelected:args=>{if(root.dataset.manage==='1') open(args.start.toString(),args.resource);},
     onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
-    onEventMove:async args=>{args.preventDefault();if(root.dataset.manage!=='1')return;
-      try {await json(`${root.dataset.move}/${args.e.data.id}`,{method:'PATCH',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':root.dataset.csrf},body:JSON.stringify({start:args.newStart.toString(),end:args.newEnd.toString(),counselor_id:args.newResource||args.e.data.resource})});await load();}
-      catch(e){error.textContent=e.message;await load();}},
+    onEventMove:args=>move(args),
+    onEventResize:args=>move(args,true),
     onBeforeCellRender:args=>{const key=args.cell.resource ?? args.cell.x ?? 0;const color=columnColors[colorIndex(key)];if(args.cell.properties)args.cell.properties.backColor=color;else args.cell.backColor=color;},
     onBeforeEventRender:args=>{args.data.backColor=args.data.topicColor; args.data.barColor=args.data.statusColor; args.data.fontColor='#111827';}
   });
   dp.init();
+  const month = new DayPilot.Month('stage06-month', {
+    locale:'fa-ir', weekStarts:6, eventMoveHandling:root.dataset.manage==='1'?'Update':'Disabled',
+    onTimeRangeSelected:args=>{if(root.dataset.manage==='1'){const counselor=state.filters.counselor_id||state.resources[0]?.id||null;open(`${args.start.toString('yyyy-MM-dd')}T09:00:00`,counselor);}},
+    onEventClick:args=>{if(args.e.data.url) location.href=args.e.data.url;},
+    onEventMove:args=>move(args),
+    onBeforeEventRender:args=>{args.data.backColor=args.data.topicColor;args.data.barColor=args.data.statusColor;args.data.fontColor='#111827';}
+  });
+  month.init();
   function range() {
     let start = new Date(state.date), end;
     if (state.view==='week') start.setDate(start.getDate()-((start.getDay()+1)%7));
-    end = new Date(start); end.setDate(end.getDate()+(state.view==='week'?7:1));
+    if (state.view==='month') start=new Date(state.date.getFullYear(),state.date.getMonth(),1);
+    end = new Date(start); if(state.view==='month') end.setMonth(end.getMonth()+1); else end.setDate(end.getDate()+(state.view==='week'?7:1));
     return {start:ymd(start),end:ymd(end)};
   }
   async function load() {
@@ -94,12 +111,13 @@
       const r=range();
       const [resources, events] = await Promise.all([
         json(query(root.dataset.resources,{date:ymd(state.date)})),
-        json(query(root.dataset.events,r))
+        json(query(root.dataset.events,{...r,...state.filters}))
       ]);
       state.resources=resources;
       const mapped=events.map(e=>({id:e.id,start:local(e.start),end:local(e.end),resource:String(e.resourceId),text:e.title,topicColor:e.color,statusColor:e.statusColor,url:e.url}));
-      if (state.view==='day') dp.update({viewType:'Resources',startDate:ymd(state.date),columns:resources.map(x=>({id:String(x.id),name:`${x.name} · ${x.hours||'بدون شیفت'}`})),events:mapped});
-      else dp.update({viewType:'Week',startDate:ymd(state.date),events:mapped});
+      const calendar=$('#stage06-daypilot'), monthElement=$('#stage06-month');
+      if(state.view==='month') {calendar.hidden=true;monthElement.hidden=false;month.update({startDate:ymd(state.date),events:mapped});}
+      else {monthElement.hidden=true;calendar.hidden=false;if (state.view==='day') dp.update({viewType:'Resources',startDate:ymd(state.date),columns:resources.filter(x=>!state.filters.counselor_id||String(x.id)===state.filters.counselor_id).map(x=>({id:String(x.id),name:`${x.name} · ${x.hours||'بدون شیفت'}`})),events:mapped});else dp.update({viewType:'Week',startDate:ymd(state.date),events:mapped});}
       if (!resources.length) error.textContent='مشاور فعالی برای این مرکز ثبت نشده است.';
     } catch(e) {error.textContent=e.message; console.error('Ensha calendar:',e);}
     finally {loading.hidden=true;}
@@ -138,8 +156,10 @@
       finally { submit.disabled=false; }
     }catch(err){$('[data-drawer-error]',drawer).textContent=err.message;}};
   $('[data-view]').onchange=e=>{state.view=e.target.value;load();};
-  $('[data-prev]').onclick=()=>{state.date.setDate(state.date.getDate()-(state.view==='week'?7:1));state.month=new Date(state.date);load();};
-  $('[data-next]').onclick=()=>{state.date.setDate(state.date.getDate()+(state.view==='week'?7:1));state.month=new Date(state.date);load();};
+  root.querySelectorAll('[data-calendar-filter]').forEach(select=>select.onchange=()=>{state.filters[select.name]=select.value;load();});
+  $('[data-clear-filters]').onclick=()=>{root.querySelectorAll('[data-calendar-filter]').forEach(s=>s.value='');state.filters={counselor_id:'',topic_id:'',status:''};load();};
+  $('[data-prev]').onclick=()=>{if(state.view==='month')state.date.setMonth(state.date.getMonth()-1);else state.date.setDate(state.date.getDate()-(state.view==='week'?7:1));state.month=new Date(state.date);load();};
+  $('[data-next]').onclick=()=>{if(state.view==='month')state.date.setMonth(state.date.getMonth()+1);else state.date.setDate(state.date.getDate()+(state.view==='week'?7:1));state.month=new Date(state.date);load();};
   $('[data-today]').onclick=()=>{state.date=new Date();state.month=new Date();load();};
   load();
 })();

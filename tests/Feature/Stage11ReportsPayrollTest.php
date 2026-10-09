@@ -40,7 +40,7 @@ class Stage11ReportsPayrollTest extends TestCase
         DB::table('staff_pay_rules')->where('id',$ruleId)->update(['hourly_amount'=>999999]);
         $this->assertSame(120000,(int)$item->fresh()->payable_amount);
         app(PayrollService::class)->lock($run,$manager);
-        $this->assertSame('locked',$run->fresh()->status);
+        $this->assertSame('submitted',$run->fresh()->status);
     }
 
     public function test_xlsx_export_is_a_real_zip_based_workbook(): void

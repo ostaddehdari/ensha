@@ -42,6 +42,7 @@ use App\Http\Controllers\CompensationRuleController;
 use App\Http\Controllers\CounselorSettlementController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\PayrollReportController;
+use App\Http\Controllers\IntegrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -72,6 +73,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/centres/{centre}/branches/{branch}', [CentreBranchController::class, 'update'])->name('centres.branches.update');
         Route::get('/centres/{centre}/settings', [CentreSettingsController::class, 'edit'])->name('centres.settings.edit');
         Route::put('/centres/{centre}/settings', [CentreSettingsController::class, 'update'])->name('centres.settings.update');
+        Route::get('/centres/{centre}/integrations', [IntegrationController::class,'index'])->name('centres.integrations.index');
+        Route::put('/centres/{centre}/integrations/{driver}', [IntegrationController::class,'update'])->middleware('throttle:sensitive')->name('centres.integrations.update');
+        Route::post('/centres/{centre}/integrations/{driver}/check', [IntegrationController::class,'check'])->middleware('throttle:sensitive')->name('centres.integrations.check');
         Route::get('/centres/{centre}/operations', [CentreOperationsController::class,'index'])->name('centres.operations');
         Route::post('/centres/{centre}/counselors', [CentreOperationsController::class,'attachCounselor'])->name('centres.operations.counselor');
         Route::post('/centres/{centre}/categories', [CentreOperationsController::class,'category'])->name('centres.operations.category');
@@ -147,6 +151,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports/payroll/export', [PayrollReportController::class, 'exportLive'])->middleware('throttle:exports')->name('reports.payroll.export');
         Route::get('/reports/payroll/runs/{run}', [PayrollReportController::class, 'show'])->name('reports.payroll.runs.show');
         Route::post('/reports/payroll/runs/{run}/lock', [PayrollReportController::class, 'lock'])->middleware('throttle:sensitive')->name('reports.payroll.runs.lock');
+        Route::post('/reports/payroll/runs/{run}/approve', [PayrollReportController::class, 'approve'])->middleware('throttle:sensitive')->name('reports.payroll.runs.approve');
+        Route::post('/reports/payroll/runs/{run}/pay', [PayrollReportController::class, 'pay'])->middleware('throttle:sensitive')->name('reports.payroll.runs.pay');
+        Route::post('/reports/payroll/runs/{run}/void', [PayrollReportController::class, 'void'])->middleware('throttle:sensitive')->name('reports.payroll.runs.void');
         Route::get('/reports/payroll/runs/{run}/export', [PayrollReportController::class, 'exportRun'])->middleware('throttle:exports')->name('reports.payroll.runs.export');
         Route::get('/operations', [DailyOperationsController::class, 'index'])->name('operations.index');
         Route::post('/operations/appointments/{appointment}/check-in', [DailyOperationsController::class, 'checkIn'])->middleware('throttle:sensitive')->name('operations.check-in');
@@ -220,6 +227,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/counselor/recordings/{recording}/stream', [SessionRecordingController::class,'stream'])->middleware('throttle:60,1')->name('counselor.recordings.stream');
         Route::post('/counselor/recordings/{recording}/transcribe', [SessionRecordingController::class,'requestTranscription'])->middleware('throttle:sensitive')->name('counselor.recordings.transcribe');
         Route::put('/counselor/recordings/{recording}/transcript', [SessionRecordingController::class,'transcript'])->middleware('throttle:sensitive')->name('counselor.recordings.transcript');
+        Route::get('/recordings/retention', [SessionRecordingController::class,'retention'])->name('recordings.retention.index');
+        Route::post('/recordings/{recording}/legal-hold', [SessionRecordingController::class,'legalHold'])->middleware('throttle:sensitive')->name('recordings.retention.hold');
+        Route::post('/recordings/{recording}/legal-hold/release', [SessionRecordingController::class,'releaseLegalHold'])->middleware('throttle:sensitive')->name('recordings.retention.release');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');

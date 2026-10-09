@@ -127,7 +127,7 @@ class CounsellingCaseController extends Controller
             'assignment_role' => ['required', Rule::in(['counselor', 'case_manager', 'observer'])],
             'is_primary' => ['sometimes', 'boolean'], 'starts_at' => ['nullable', 'date'], 'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'], 'notes' => ['nullable', 'string', 'max:2000'],
         ]);
-        abort_unless($this->availableAssignees($request->user(), $case->centre_id)->whereKey($data['user_id'])->exists(), 422);
+        abort_unless($this->availableAssignees($request->user(), $case->centre_id)->contains('id', (int) $data['user_id']), 422);
         DB::transaction(function () use ($case, $data) {
             if (! empty($data['is_primary'])) $case->assignments()->where('assignment_role', $data['assignment_role'])->update(['is_primary' => false]);
             $case->assignments()->updateOrCreate(['user_id' => $data['user_id'], 'assignment_role' => $data['assignment_role']], [...$data, 'status' => 'active']);

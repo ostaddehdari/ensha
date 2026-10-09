@@ -326,6 +326,7 @@ class AccessControlTest extends TestCase
         $viewerRole->permissions()->attach(Permission::where('slug', 'users.view')->firstOrFail());
         $viewer = $this->makeUser('secretary', '09129999985', '3456789017', $centre);
         $viewer->update(['role' => $viewerRole->slug, 'role_id' => $viewerRole->id]);
+        $viewer->roleAssignments()->update(['role_id' => $viewerRole->id]);
         $target = $this->makeUser('client', '09129999984', '4567890124', $centre);
         UserSession::create([
             'user_id' => $target->id,
@@ -348,7 +349,7 @@ class AccessControlTest extends TestCase
         $centre ??= Centre::where('code', 'ENSHA-MAIN')->first();
         [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, 'نمونه');
 
-        return User::create([
+        $user = User::create([
             'first_name' => $firstName,
             'last_name' => $lastName,
             'name' => $name,
@@ -364,5 +365,12 @@ class AccessControlTest extends TestCase
             'must_change_password' => false,
             'auth_revision' => 1,
         ]);
+
+        $user->roleAssignments()->create([
+            'role_id' => $role->id,
+            'centre_id' => $role->scope === 'global' ? null : $centre?->id,
+        ]);
+
+        return $user;
     }
 }

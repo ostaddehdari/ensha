@@ -3,6 +3,22 @@
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('ensha:audio-retention')->dailyAt('02:40')->withoutOverlapping();
+Schedule::command('ensha:sms-send')->everyMinute()->withoutOverlapping();
+
+Artisan::command('ensha:sms-send {--limit=100}', function () {
+    $result=app(\App\Services\SmsProviderService::class)->sendDue((int)$this->option('limit'));
+    foreach($result as $key=>$value)$this->line(strtoupper($key).'='.$value);
+    return 0;
+})->purpose('Send queued SMS messages using the configured centre provider');
+
+Artisan::command('ensha:audio-retention {--centre=} {--dry-run}', function () {
+    $result=app(\App\Services\AudioRetentionService::class)->purgeExpired($this->option('centre')?(int)$this->option('centre'):null,null,(bool)$this->option('dry-run'));
+    foreach($result as $key=>$value)$this->line(strtoupper($key).'='.$value);
+    return $result['failed']?1:0;
+})->purpose('Purge expired clinical audio unless protected by Legal Hold');
 
 
 Artisan::command('ensha:about', function () {
@@ -462,3 +478,22 @@ Artisan::command('ensha:verify-stage11-complete', function () {
     if($errors){foreach($errors as $error)$this->error($error);return 1;}
     $this->info('VERIFY_STAGE11_COMPLETE_OK'); return 0;
 })->purpose('Verify Ensha Stage 11 financial reports, payroll and XLSX exports / v0.23.0');
+
+Artisan::command('ensha:verify-stage12-complete', function () {
+    $errors=[];
+    if(trim((string)@file_get_contents(base_path('VERSION')))!=='0.24.0')$errors[]='VERSION باید 0.24.0 باشد.';
+    foreach(['staff_payroll_run_audits','session_recording_retention_audits','centre_integrations'] as $table)if(!Schema::hasTable($table))$errors[]="جدول {$table} وجود ندارد.";
+    $columns=['staff_payroll_runs'=>['submitted_by','approved_by','paid_by','payment_reference','voided_by','void_reason'],
+        'session_recordings'=>['legal_hold','retention_expires_at','purged_at','purge_reason'],
+        'sms_messages'=>['provider_message_id','attempts','last_attempt_at','delivered_at','last_error']];
+    foreach($columns as $table=>$required)foreach($required as $column)if(!Schema::hasColumn($table,$column))$errors[]="ستون {$table}.{$column} وجود ندارد.";
+    $routes=['reports.payroll.runs.approve','reports.payroll.runs.pay','reports.payroll.runs.void','centres.integrations.index','recordings.retention.index','api.wordpress.availability','api.wordpress.book'];
+    foreach($routes as $route)if(!\Illuminate\Support\Facades\Route::has($route))$errors[]="مسیر {$route} وجود ندارد.";
+    $permissions=['payroll.submit','payroll.approve','payroll.pay','payroll.void','integrations.manage','session_recordings.retention'];
+    if(DB::table('permissions')->whereIn('slug',$permissions)->where('is_active',true)->count()!==count($permissions))$errors[]='مجوزهای Stage 12 کامل نیستند.';
+    foreach(['public/js/stage06-scheduler.js','tests/Feature/Stage12StabilizationTest.php','tests/Browser/stage12-calendar.spec.js','app/Services/AudioRetentionService.php','app/Services/SmsProviderService.php','app/Http/Controllers/IntegrationController.php','app/Http/Controllers/WordPressApiController.php','integrations/wordpress/ensha-booking.php'] as $file)if(!file_exists(base_path($file)))$errors[]="فایل {$file} وجود ندارد.";
+    $js=(string)@file_get_contents(public_path('js/stage06-scheduler.js'));
+    foreach(['DayPilot.Month','onEventResize','data-calendar-filter'] as $needle)if(!str_contains($js,$needle)&&!str_contains((string)@file_get_contents(resource_path('views/appointments/calendar.blade.php')),$needle))$errors[]="قرارداد DayPilot ناقص است: {$needle}";
+    if($errors){foreach($errors as $error)$this->error($error);return 1;}
+    $this->info('VERIFY_STAGE12_COMPLETE_OK');return 0;
+})->purpose('Verify Ensha Stage 12 stabilization, integrations and audio retention / v0.24.0');

@@ -27,24 +27,22 @@ while IFS= read -r file; do
     fi
 done < "$BACKUP/files.list"
 
-DB_CONFIG="$(mktemp /run/ensha-stage11-rollback-db.XXXXXX.json)"
+systemctl disable --now ensha-scheduler.timer >/dev/null 2>&1 || true
+rm -f /etc/systemd/system/ensha-scheduler.timer /etc/systemd/system/ensha-scheduler.service
+systemctl daemon-reload
+
+DB_CONFIG="$(mktemp /run/ensha-stage12-rollback-db.XXXXXX.json)"
 "$PHP_BIN" "$APP/deploy/database-config.php" "$APP" "$DB_CONFIG"
 db_value(){ "$PHP_BIN" -r '$d=json_decode(file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR); echo $d[$argv[2]] ?? "";' "$DB_CONFIG" "$1"; }
 driver="$(db_value driver)"; database="$(db_value database)"
 
 case "$driver" in
     mysql|mariadb)
-        DB_CLIENT="$(mktemp /run/ensha-stage11-rollback-mysql.XXXXXX.cnf)"
+        DB_CLIENT="$(mktemp /run/ensha-stage12-rollback-mysql.XXXXXX.cnf)"
         "$PHP_BIN" -r '$d=json_decode(file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);$q=fn($v)=>"\"".addcslashes((string)$v,"\\\"")."\"";$s="[client]\nuser=".$q($d["username"])."\npassword=".$q($d["password"])."\nhost=".$q($d["host"])."\n";if($d["port"]!=="")$s.="port=".$q($d["port"])."\n";if($d["unix_socket"]!=="")$s.="socket=".$q($d["unix_socket"])."\n";file_put_contents($argv[2],$s,LOCK_EX);chmod($argv[2],0600);' "$DB_CONFIG" "$DB_CLIENT"
-        mysql --defaults-extra-file="$DB_CLIENT" "$database" <<'SQL'
-SET FOREIGN_KEY_CHECKS=0;
-DROP TABLE IF EXISTS `staff_payroll_items`, `staff_payroll_runs`, `financial_report_exports`;
-SET FOREIGN_KEY_CHECKS=1;
-SQL
         gzip -dc "$BACKUP/database.sql.gz" | mysql --defaults-extra-file="$DB_CLIENT" "$database"
         ;;
     pgsql)
-        PGPASSWORD="$(db_value password)" psql -h "$(db_value host)" -p "$(db_value port)" -U "$(db_value username)" -d "$database" -c 'DROP TABLE IF EXISTS staff_payroll_items, staff_payroll_runs, financial_report_exports CASCADE;'
         gzip -dc "$BACKUP/database.sql.gz" | PGPASSWORD="$(db_value password)" psql -h "$(db_value host)" -p "$(db_value port)" -U "$(db_value username)" -d "$database"
         ;;
     sqlite)
@@ -54,7 +52,11 @@ SQL
 esac
 
 cd "$APP"
-COMPOSER_ALLOW_SUPERUSER=1 "$COMPOSER_BIN" dump-autoload --no-dev --classmap-authoritative --no-interaction
+rm -f -- bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/config.php bootstrap/cache/events.php
+find bootstrap/cache -maxdepth 1 -type f -name 'routes-*.php' -delete
+COMPOSER_ALLOW_SUPERUSER=1 "$COMPOSER_BIN" install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+COMPOSER_ALLOW_SUPERUSER=1 "$COMPOSER_BIN" dump-autoload --optimize --no-scripts --no-interaction
+"$PHP_BIN" artisan package:discover --ansi
 "$PHP_BIN" artisan optimize:clear
 "$PHP_BIN" artisan config:cache
 install -d -m 775 storage/app/private/report-exports storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
@@ -65,7 +67,7 @@ runuser -u www-data -- "$PHP_BIN" artisan view:cache
 "$PHP_BIN" artisan up
 systemctl restart "$SERVICE"
 for attempt in {1..15}; do
-    curl --fail --silent --max-time 5 "$HEALTH_URL" >/dev/null && { echo "ROLLBACK_STAGE11_OK=$BACKUP"; exit 0; }
+    curl --fail --silent --max-time 5 "$HEALTH_URL" >/dev/null && { echo "ROLLBACK_STAGE12_OK=$BACKUP"; exit 0; }
     sleep 1
 done
 fail 'Health Check پس از rollback ناموفق بود.'
