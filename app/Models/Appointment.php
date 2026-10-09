@@ -32,6 +32,7 @@ class Appointment extends Model
     public function histories(): HasMany { return $this->hasMany(AppointmentStatusHistory::class); }
     public function counsellingSession(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(CounsellingSession::class); }
     public function sessionReport(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(SessionReport::class); }
+    public function recordings(): HasMany { return $this->hasMany(SessionRecording::class); }
     public function canTransitionTo(string $status): bool {
         if (in_array($status, self::TRANSITIONS[$this->status] ?? [], true)) return true;
         $current=\Illuminate\Support\Facades\DB::table('appointment_statuses')->where('centre_id',$this->centre_id)->where('slug',$this->status)->first();

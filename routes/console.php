@@ -319,3 +319,35 @@ Artisan::command('ensha:verify-stage07-complete', function () {
     $this->info('VERIFY_STAGE07_COMPLETE_OK');
     return 0;
 })->purpose('Verify Ensha Stage 07 counselor workspace and session reports / v0.19.0');
+
+Artisan::command('ensha:verify-stage08-complete', function () {
+    $errors=[];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.20.0') $errors[]='VERSION باید 0.20.0 باشد.';
+    if (! extension_loaded('sodium')) $errors[]='افزونه Sodium برای رمزگذاری صوت فعال نیست.';
+    if (! Schema::hasTable('session_recordings')) $errors[]='جدول session_recordings وجود ندارد.';
+    foreach (['public_id','appointment_id','counselling_session_id','consent_id','path','sha256','plaintext_sha256','status','transcript_status','transcript_text','consent_snapshot','transcript_hash'] as $column) {
+        if (Schema::hasTable('session_recordings') && ! Schema::hasColumn('session_recordings',$column)) $errors[]="ستون session_recordings.{$column} وجود ندارد.";
+    }
+    foreach (['session_recordings.view','session_recordings.manage','session_transcripts.manage','session_recordings.audit'] as $permission) {
+        if (! DB::table('permissions')->where('slug',$permission)->where('is_active',true)->exists()) $errors[]="مجوز {$permission} ثبت نشده است.";
+    }
+    foreach (['counselor.recordings.consent','counselor.recordings.initialize','counselor.recordings.chunk','counselor.recordings.finalize','counselor.recordings.stream','counselor.recordings.transcribe','counselor.recordings.transcript','counselor.recordings.destroy'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    }
+    foreach (['app/Http/Controllers/SessionRecordingController.php','app/Jobs/TranscribeSessionRecording.php','app/Models/SessionRecording.php','app/Services/ClinicalAudioVault.php','config/clinical_audio.php','resources/views/counselor/partials/recording-panel.blade.php','public/css/stage08-recording.css','public/js/stage08-recorder.js'] as $file) {
+        if (! file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    }
+    $counselorPermissions=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','counselor')->whereIn('p.slug',['session_recordings.view','session_recordings.manage','session_transcripts.manage'])->distinct()->count('p.slug');
+    if ($counselorPermissions!==3) $errors[]='مجوزهای ضبط و متن مشاور کامل نیست.';
+    $secretaryRecordingPermissions=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','secretary')->whereIn('p.slug',['session_recordings.view','session_recordings.manage','session_transcripts.manage'])->count();
+    if ($secretaryRecordingPermissions!==0) $errors[]='منشی نباید به محتوای صوت یا متن جلسه دسترسی داشته باشد.';
+    if (config('clinical_audio.disk') !== 'local') $errors[]='در Stage 08 دیسک صوت امن باید local باشد.';
+    $audioRoot=storage_path('app/private/ensha-audio');
+    if (! is_dir($audioRoot)) $errors[]='پوشه خصوصی صوت ساخته نشده است.';
+    if (is_link($audioRoot)) $errors[]='پوشه خصوصی صوت نباید symlink باشد.';
+    if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE08_COMPLETE_OK');
+    return 0;
+})->purpose('Verify Ensha Stage 08 secure session recording and transcription / v0.20.0');

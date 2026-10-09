@@ -62,17 +62,23 @@ class CounselorClinicalController extends Controller
     {
         $this->authorizeView($request, $appointment);
         $appointment->load(['client.user', 'client.consents', 'topic', 'counselor', 'case']);
-        $session = CounsellingSession::with('report.addenda.author')->where('appointment_id', $appointment->id)->first();
+        $session = CounsellingSession::with(['report.addenda.author', 'recordings' => fn ($query) => $query->latest()])->where('appointment_id', $appointment->id)->first();
         $report = $session?->report;
+        $recordings = $session?->recordings ?: collect();
         $template = $report?->template ?: SessionReportTemplate::effectiveFor((int) $appointment->centre_id, $appointment->topic_id)->first();
         $template ??= SessionReportTemplate::ensureDefault((int) $appointment->centre_id);
         $fields = $template?->fields ?: [];
         $answers = $report?->structured_answers ?: [];
         $recordingConsent = $appointment->client?->consents
-            ?->first(fn ($consent) => $consent->consent_type === 'recording' && $consent->is_granted && ! $consent->revoked_at && (! $consent->expires_at || $consent->expires_at->isFuture()));
+            ?->first(fn ($consent) => $consent->consent_type === 'recording' && $consent->is_granted && ! $consent->revoked_at && (! $consent->expires_at || $consent->expires_at->gte(today())));
         $canManage = $this->canManage($request, $appointment);
+        $canRecord = $canManage && $request->user()->hasPermission('session_recordings.manage');
+        $canTranscribe = $canManage && $request->user()->hasPermission('session_transcripts.manage');
+        $canListen = $request->user()->hasPermission('session_recordings.view')
+            && ($request->user()->isSuperAdmin() || (int) $appointment->counselor_id === (int) $request->user()->id);
+        $transcriptionAvailable = filled(config('clinical_audio.transcription.endpoint'));
 
-        return view('counselor.session-report', compact('appointment', 'session', 'report', 'template', 'fields', 'answers', 'recordingConsent', 'canManage'));
+        return view('counselor.session-report', compact('appointment', 'session', 'report', 'template', 'fields', 'answers', 'recordingConsent', 'recordings', 'canManage', 'canRecord', 'canListen', 'canTranscribe', 'transcriptionAvailable'));
     }
 
     public function start(Request $request, Appointment $appointment, AppointmentBookingService $booking)

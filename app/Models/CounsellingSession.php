@@ -15,4 +15,5 @@ class CounsellingSession extends \Illuminate\Database\Eloquent\Model
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
     public function notes(): HasMany { return $this->hasMany(ConfidentialNote::class, 'session_id'); }
     public function report(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(SessionReport::class, 'counselling_session_id'); }
+    public function recordings(): HasMany { return $this->hasMany(SessionRecording::class, 'counselling_session_id'); }
 }

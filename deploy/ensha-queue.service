@@ -1,0 +1,23 @@
+[Unit]
+Description=Ensha Laravel Queue Worker
+After=network.target redis-server.service ensha-web.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ensha
+ExecStart=/usr/bin/php artisan queue:work --queue=clinical,default --sleep=3 --tries=3 --timeout=900 --max-time=3600
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=900
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/var/www/ensha/storage /var/www/ensha/bootstrap/cache
+
+[Install]
+WantedBy=multi-user.target

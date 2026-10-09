@@ -1,5 +1,5 @@
 @extends('layouts.app',['title'=>'گزارش جلسه '.$appointment->appointment_number])
-@push('head')<link rel="stylesheet" href="{{ asset('css/stage07-clinical.css').'?v=0.19.0' }}">@endpush
+@push('head')<link rel="stylesheet" href="{{ asset('css/stage07-clinical.css').'?v=0.20.0' }}"><link rel="stylesheet" href="{{ asset('css/stage08-recording.css').'?v=0.20.0' }}">@endpush
 @section('content')
 <div class="clinical-heading"><div><span class="ensha-eyebrow">گزارش محرمانه جلسه</span><h2>{{ $appointment->client?->user?->display_name }}</h2><p>{{ $appointment->topic_name_snapshot ?: $appointment->topic?->name }} · {{ $appointment->appointment_number }}</p></div><a class="ensha-secondary-btn" href="{{ route('counselor.workspace') }}"><i class="ki-filled ki-left"></i> فضای کاری مشاور</a></div>
 
@@ -14,6 +14,7 @@
 
 <div class="report-layout">
     <main>
+        @include('counselor.partials.recording-panel')
         @if($report?->isFinalized())
         <section class="report-section"><div class="report-lock"><strong>گزارش نهایی است.</strong> محتوای اصلی قفل شده و هر توضیح بعدی باید به‌صورت الحاقیه ثبت شود.</div><div class="mt-4"><div class="report-answer"><span>شرح جلسه</span><strong>{{ $report->summary ?: '—' }}</strong></div><div class="report-answer"><span>نتیجه و اتفاق جلسه</span><strong>{{ $report->outcome ?: '—' }}</strong></div><div class="report-answer"><span>پیشنهادها و برنامه ادامه</span><strong>{{ $report->recommendations ?: '—' }}</strong></div>@foreach($fields as $field)<div class="report-answer"><span>{{ $field['label'] }}</span><strong>@php($value=$answers[$field['key']]??null){{ $field['type']==='checkbox'?($value?'بله':'خیر'):($value?:'—') }}</strong></div>@endforeach</div><p class="text-xs text-muted-foreground mt-4" dir="ltr">SHA-256: {{ $report->content_hash }}</p></section>
         @else
@@ -33,9 +34,9 @@
         @if($report?->isFinalized())<section class="report-section mt-4"><h3>الحاقیه‌ها</h3>@forelse($report->addenda as $addendum)<div class="report-addendum"><p>{{ $addendum->body }}</p><small>{{ $addendum->author?->display_name }} · <span data-jalali-datetime="{{ $addendum->created_at->toIso8601String() }}">{{ $addendum->created_at->format('Y-m-d H:i') }}</span></small></div>@empty<p class="text-muted-foreground">الحاقیه‌ای ثبت نشده است.</p>@endforelse @if($canManage)<form method="post" action="{{ route('counselor.reports.addendum',$appointment) }}" class="mt-4 grid gap-2">@csrf<textarea class="kt-input" name="body" required maxlength="20000" placeholder="متن الحاقیه"></textarea><button class="kt-btn kt-btn-outline">ثبت الحاقیه</button></form>@endif</section>@endif
     </main>
     <aside>
-        <section class="privacy-card {{ $recordingConsent?'ok':'warn' }}"><strong><i class="ki-filled {{ $recordingConsent?'ki-shield-tick':'ki-information-2' }}"></i> رضایت ضبط جلسه</strong><p class="mt-2 text-sm">{{ $recordingConsent?'رضایت معتبر ضبط جلسه در پرونده ثبت شده است.':'رضایت معتبر ضبط جلسه ثبت نشده؛ ضبط صوت مجاز نیست.' }}</p><small>ضبط و تبدیل صوت در Stage 08 روی همین جلسه فعال خواهد شد.</small></section>
+        <section class="privacy-card {{ $recordingConsent?'ok':'warn' }}"><strong><i class="ki-filled {{ $recordingConsent?'ki-shield-tick':'ki-information-2' }}"></i> رضایت ضبط جلسه</strong><p class="mt-2 text-sm">{{ $recordingConsent?'رضایت معتبر ضبط جلسه در پرونده ثبت شده است.':'رضایت معتبر ضبط جلسه ثبت نشده؛ ضبط صوت مجاز نیست.' }}</p><small>{{ $recordings->count() }} ضبط امن برای این جلسه ثبت شده است.</small></section>
         <section class="privacy-card mt-3"><strong>حریم خصوصی</strong><p class="mt-2 text-sm">گزارش بالینی رمزگذاری می‌شود و منشی به محتوای آن دسترسی ندارد.</p></section>
     </aside>
 </div>
 @endsection
-@push('scripts')<script src="{{ asset('js/stage07-clinical.js').'?v=0.19.0' }}"></script>@endpush
+@push('scripts')<script src="{{ asset('js/stage07-clinical.js').'?v=0.20.0' }}"></script><script src="{{ asset('js/stage08-recorder.js').'?v=0.20.0' }}"></script>@endpush

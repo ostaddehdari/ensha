@@ -35,6 +35,7 @@ use App\Http\Controllers\Stage06SettingsController;
 use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\CounselorWorkspaceController;
 use App\Http\Controllers\CounselorClinicalController;
+use App\Http\Controllers\SessionRecordingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -179,6 +180,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/counselor/appointments/{appointment}/report', [CounselorClinicalController::class,'save'])->middleware('throttle:sensitive')->name('counselor.reports.save');
         Route::patch('/counselor/appointments/{appointment}/report/finalize', [CounselorClinicalController::class,'finalize'])->middleware('throttle:sensitive')->name('counselor.reports.finalize');
         Route::post('/counselor/appointments/{appointment}/report/addenda', [CounselorClinicalController::class,'addendum'])->middleware('throttle:sensitive')->name('counselor.reports.addendum');
+        Route::post('/counselor/appointments/{appointment}/recording-consent', [SessionRecordingController::class,'consent'])->middleware('throttle:sensitive')->name('counselor.recordings.consent');
+        Route::post('/counselor/appointments/{appointment}/recordings', [SessionRecordingController::class,'initialize'])->middleware('throttle:sensitive')->name('counselor.recordings.initialize');
+        Route::post('/counselor/appointments/{appointment}/recordings/{recording}/chunks', [SessionRecordingController::class,'chunk'])->middleware('throttle:120,1')->name('counselor.recordings.chunk');
+        Route::post('/counselor/appointments/{appointment}/recordings/{recording}/finalize', [SessionRecordingController::class,'finalize'])->middleware('throttle:sensitive')->name('counselor.recordings.finalize');
+        Route::delete('/counselor/appointments/{appointment}/recordings/{recording}', [SessionRecordingController::class,'destroy'])->middleware('throttle:sensitive')->name('counselor.recordings.destroy');
+        Route::get('/counselor/recordings/{recording}/stream', [SessionRecordingController::class,'stream'])->middleware('throttle:60,1')->name('counselor.recordings.stream');
+        Route::post('/counselor/recordings/{recording}/transcribe', [SessionRecordingController::class,'requestTranscription'])->middleware('throttle:sensitive')->name('counselor.recordings.transcribe');
+        Route::put('/counselor/recordings/{recording}/transcript', [SessionRecordingController::class,'transcript'])->middleware('throttle:sensitive')->name('counselor.recordings.transcript');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');
