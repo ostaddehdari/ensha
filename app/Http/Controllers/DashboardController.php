@@ -17,6 +17,9 @@ class DashboardController extends Controller
         if ($user->role === 'secretary' && $user->hasPermission('appointments.view')) {
             return app(SecretaryCalendarController::class)->index($request);
         }
+        if (in_array($user->assignedRole?->slug ?? $user->role, ['manager','finance'], true) && $user->hasPermission('finance.analytics.view')) {
+            return app(FinancialReportController::class)->dashboard($request, app(\App\Services\FinancialReportingService::class));
+        }
 
         $centreContext = $user->centre_id ? Centre::query()->withCount(['branches', 'roleAssignments'])->find($user->centre_id) : null;
         $staffAtCentre = fn () => User::query()

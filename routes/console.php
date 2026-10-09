@@ -436,3 +436,29 @@ Artisan::command('ensha:verify-stage10-complete', function () {
     if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
     $this->info('VERIFY_STAGE10_COMPLETE_OK'); return 0;
 })->purpose('Verify Ensha Stage 10 versioned compensation and counselor settlements / v0.22.0');
+
+Artisan::command('ensha:verify-stage11-complete', function () {
+    $errors=[];
+    if(trim((string)@file_get_contents(base_path('VERSION')))!=='0.23.0') $errors[]='VERSION باید 0.23.0 باشد.';
+    foreach(['financial_report_exports','staff_payroll_runs','staff_payroll_items'] as $table) if(!Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    $columns=['financial_report_exports'=>['public_id','report_key','filters','row_count','sha256','exported_at'],
+        'staff_payroll_runs'=>['public_id','run_number','period_start','period_end','status','total_payable_amount','total_worked_minutes'],
+        'staff_payroll_items'=>['payroll_run_id','staff_id','rule_snapshot','worked_minutes','overtime_minutes','shortfall_minutes','payable_amount']];
+    foreach($columns as $table=>$required) foreach($required as $column) if(Schema::hasTable($table)&&!Schema::hasColumn($table,$column)) $errors[]="ستون {$table}.{$column} وجود ندارد.";
+    $permissions=['finance.analytics.view','finance.analytics.export','payroll.view','payroll.manage','payroll.export'];
+    if(DB::table('permissions')->where('is_active',true)->whereIn('slug',$permissions)->count()!==count($permissions)) $errors[]='مجوزهای Stage 11 کامل نیستند.';
+    foreach(['reports.financial.index','reports.financial.export','reports.payroll.index','reports.payroll.runs.store','reports.payroll.runs.show','reports.payroll.runs.lock','reports.payroll.export','reports.payroll.runs.export'] as $route) if(!\Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    foreach(['app/Services/JalaliDate.php','app/Services/SimpleXlsxExporter.php','app/Services/FinancialReportingService.php','app/Services/PayrollService.php','app/Http/Controllers/FinancialReportController.php','app/Http/Controllers/PayrollReportController.php','resources/views/reports/dashboard.blade.php','resources/views/reports/financial.blade.php','resources/views/reports/payroll.blade.php','resources/views/reports/payroll-run.blade.php','public/css/stage11-reports.css'] as $file) if(!file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    if(!class_exists(\ZipArchive::class)) $errors[]='افزونه PHP Zip برای خروجی XLSX فعال نیست.';
+    if(!$errors){
+        try { $file=app(\App\Services\SimpleXlsxExporter::class)->create('آزمون',['ستون'],[['مقدار']]); if(!is_file($file['path'])||filesize($file['path'])<500||file_get_contents($file['path'],false,null,0,2)!=='PK') $errors[]='ساخت آزمایشی XLSX معتبر نبود.'; if(is_file($file['path'])) unlink($file['path']); } catch(\Throwable $e){ $errors[]='ساخت XLSX ناموفق بود: '.$e->getMessage(); }
+    }
+    $managerCount=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')->where('r.slug','manager')->whereIn('p.slug',$permissions)->distinct()->count('p.slug');
+    if($managerCount!==count($permissions)) $errors[]='مجوزهای گزارش مدیر کامل نیست.';
+    $financeCount=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')->where('r.slug','finance')->whereIn('p.slug',['finance.analytics.view','finance.analytics.export','payroll.view','payroll.export'])->distinct()->count('p.slug');
+    if($financeCount!==4) $errors[]='مجوزهای گزارش مسئول مالی کامل نیست.';
+    $financeManage=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')->where('r.slug','finance')->where('p.slug','payroll.manage')->exists();
+    if($financeManage) $errors[]='مسئول مالی نباید دوره حقوق را قفل کند.';
+    if($errors){foreach($errors as $error)$this->error($error);return 1;}
+    $this->info('VERIFY_STAGE11_COMPLETE_OK'); return 0;
+})->purpose('Verify Ensha Stage 11 financial reports, payroll and XLSX exports / v0.23.0');

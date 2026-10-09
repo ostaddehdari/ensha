@@ -42,6 +42,8 @@
             'finance-cashier' => request()->routeIs('finance.cashier.*') || request()->routeIs('finance.cash-register.*') || request()->routeIs('finance.payments.*') || request()->routeIs('finance.transactions.*'),
             'compensation-rules' => request()->routeIs('centres.compensation-rules.*'),
             'settlements' => request()->routeIs('settlements.*'),
+            'financial-reports' => request()->routeIs('reports.financial.*'),
+            'payroll-reports' => request()->routeIs('reports.payroll.*'),
             'counselor-workspace' => request()->routeIs('counselor.workspace') || request()->routeIs('counselor.reports.*') || request()->routeIs('counselor.sessions.*'),
             'appointments', 'my-appointments', 'my-calendar', 'new-appointment' => request()->routeIs('appointments.*'),
             default => request()->routeIs('module') && request()->route('module') === $slug,
@@ -90,6 +92,8 @@
                         elseif (($item['slug'] ?? '') === 'finance-cashier') $href = route('finance.cashier.index');
                         elseif (($item['slug'] ?? '') === 'compensation-rules') $href = auth()->user()->centre_id ? route('centres.compensation-rules.index', auth()->user()->centre_id) : route('centres.index');
                         elseif (($item['slug'] ?? '') === 'settlements') $href = route('settlements.index');
+                        elseif (($item['slug'] ?? '') === 'financial-reports') $href = route('reports.financial.index');
+                        elseif (($item['slug'] ?? '') === 'payroll-reports') $href = route('reports.payroll.index');
                         elseif (($item['slug'] ?? '') === 'counselor-workspace') $href = route('counselor.workspace');
                         elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);
                         $isActive = $activeFor($item['slug'] ?? '');

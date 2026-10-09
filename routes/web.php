@@ -40,6 +40,8 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PaymentReceiptController;
 use App\Http\Controllers\CompensationRuleController;
 use App\Http\Controllers\CounselorSettlementController;
+use App\Http\Controllers\FinancialReportController;
+use App\Http\Controllers\PayrollReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -138,6 +140,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/finance/settlements/{settlement}/approve', [CounselorSettlementController::class, 'approve'])->middleware('throttle:sensitive')->name('settlements.approve');
         Route::post('/finance/settlements/{settlement}/pay', [CounselorSettlementController::class, 'pay'])->middleware('throttle:sensitive')->name('settlements.pay');
         Route::post('/finance/settlements/{settlement}/cancel', [CounselorSettlementController::class, 'cancel'])->middleware('throttle:sensitive')->name('settlements.cancel');
+        Route::get('/reports/financial', [FinancialReportController::class, 'index'])->name('reports.financial.index');
+        Route::get('/reports/financial/export/{type}', [FinancialReportController::class, 'export'])->middleware('throttle:exports')->name('reports.financial.export');
+        Route::get('/reports/payroll', [PayrollReportController::class, 'index'])->name('reports.payroll.index');
+        Route::post('/reports/payroll/runs', [PayrollReportController::class, 'store'])->middleware('throttle:sensitive')->name('reports.payroll.runs.store');
+        Route::get('/reports/payroll/export', [PayrollReportController::class, 'exportLive'])->middleware('throttle:exports')->name('reports.payroll.export');
+        Route::get('/reports/payroll/runs/{run}', [PayrollReportController::class, 'show'])->name('reports.payroll.runs.show');
+        Route::post('/reports/payroll/runs/{run}/lock', [PayrollReportController::class, 'lock'])->middleware('throttle:sensitive')->name('reports.payroll.runs.lock');
+        Route::get('/reports/payroll/runs/{run}/export', [PayrollReportController::class, 'exportRun'])->middleware('throttle:exports')->name('reports.payroll.runs.export');
         Route::get('/operations', [DailyOperationsController::class, 'index'])->name('operations.index');
         Route::post('/operations/appointments/{appointment}/check-in', [DailyOperationsController::class, 'checkIn'])->middleware('throttle:sensitive')->name('operations.check-in');
         Route::post('/operations/appointments/{appointment}/start', [DailyOperationsController::class, 'startSession'])->middleware('throttle:sensitive')->name('operations.start');

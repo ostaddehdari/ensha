@@ -50,6 +50,8 @@ return [
             ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
             ['label'=>'قوانین سهم مشاور','slug'=>'compensation-rules','route'=>'centres.compensation-rules.index','centre'=>true,'permission'=>'compensation_rules.view','icon'=>'ki-filled ki-percentage'],
             ['label'=>'تسویه مشاوران','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
+            ['label'=>'گزارش‌های مالی','slug'=>'financial-reports','route'=>'reports.financial.index','permission'=>'finance.analytics.view','icon'=>'ki-filled ki-chart-line-up'],
+            ['label'=>'کارکرد و حقوق','slug'=>'payroll-reports','route'=>'reports.payroll.index','permission'=>'payroll.view','icon'=>'ki-filled ki-time'],
         ],
         'secretary' => [
             ['section'=>'عملیات منشی'],
@@ -73,6 +75,8 @@ return [
             ['label'=>'مراجعین','slug'=>'clients','route'=>'clients.index','permission'=>'clients.view','icon'=>'ki-filled ki-people'],
             ['label'=>'قوانین سهم مشاور','slug'=>'compensation-rules','route'=>'centres.compensation-rules.index','centre'=>true,'permission'=>'compensation_rules.view','icon'=>'ki-filled ki-percentage'],
             ['label'=>'تسویه مشاوران','slug'=>'settlements','route'=>'settlements.index','permission'=>'settlements.view','icon'=>'ki-filled ki-cheque'],
+            ['label'=>'گزارش‌های مالی','slug'=>'financial-reports','route'=>'reports.financial.index','permission'=>'finance.analytics.view','icon'=>'ki-filled ki-chart-line-up'],
+            ['label'=>'کارکرد و حقوق','slug'=>'payroll-reports','route'=>'reports.payroll.index','permission'=>'payroll.view','icon'=>'ki-filled ki-time'],
         ],
         'counselor' => [
             ['section'=>'کار من'],
@@ -112,5 +116,7 @@ return [
         ['label' => 'صندوق و دریافت‌ها', 'slug' => 'finance-cashier', 'icon' => 'ki-filled ki-wallet', 'permission' => 'payments.view'],
         ['label' => 'قوانین سهم مشاور', 'slug' => 'compensation-rules', 'icon' => 'ki-filled ki-percentage', 'permission' => 'compensation_rules.view'],
         ['label' => 'تسویه مشاوران', 'slug' => 'settlements', 'icon' => 'ki-filled ki-cheque', 'permission' => 'settlements.view'],
+        ['label' => 'گزارش‌های مالی', 'slug' => 'financial-reports', 'icon' => 'ki-filled ki-chart-line-up', 'permission' => 'finance.analytics.view'],
+        ['label' => 'کارکرد و حقوق', 'slug' => 'payroll-reports', 'icon' => 'ki-filled ki-time', 'permission' => 'payroll.view'],
     ],
 ];

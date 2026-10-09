@@ -48,7 +48,9 @@ class StaffAttendanceController extends Controller
         }
         $report=$isManager ? $query->select('s.*','u.name')->orderByDesc('s.started_at')->paginate(40) : null;
         $branches=DB::table('centre_branches')->where('centre_id',$centre)->get();
-        return view('operations.attendance',compact('mine','open','today','week','month','report','branches','isManager','summary'));
+        $staffOptions=DB::table('users as u')->join('user_role_centres as urc','urc.user_id','=','u.id')->join('roles as r','r.id','=','urc.role_id')
+            ->where('urc.centre_id',$centre)->where('r.slug','!=','client')->select('u.id','u.name')->distinct()->orderBy('u.name')->get();
+        return view('operations.attendance',compact('mine','open','today','week','month','report','branches','staffOptions','isManager','summary'));
     }
     private function minutes($sessions, Carbon $from): int
     {

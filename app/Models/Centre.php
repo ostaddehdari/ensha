@@ -57,4 +57,5 @@ class Centre extends Model
     public function cashRegisterSessions(): HasMany { return $this->hasMany(CashRegisterSession::class); }
     public function compensationRules(): HasMany { return $this->hasMany(CompensationRule::class); }
     public function counselorSettlements(): HasMany { return $this->hasMany(CounselorSettlement::class); }
+    public function payrollRuns(): HasMany { return $this->hasMany(StaffPayrollRun::class); }
 }
