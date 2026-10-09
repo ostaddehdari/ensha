@@ -1,10 +1,10 @@
 @extends('layouts.app',['title'=>'تنظیمات نوبت‌دهی '.$centre->name])
-@push('head')<link rel="stylesheet" href="{{ asset('css/appointments-settings.css').'?v=0.18.8' }}">@endpush
+@push('head')<link rel="stylesheet" href="{{ asset('css/appointments-settings.css').'?v=0.19.0' }}"><link rel="stylesheet" href="{{ asset('css/stage07-clinical.css').'?v=0.19.0' }}">@endpush
 @section('content')
 <div class="ensha-page-heading appointments-settings-heading"><div><span class="ensha-eyebrow">مدیریت مرکز</span><h2>تنظیمات نوبت‌دهی</h2><p>{{ $centre->name }} · تنظیمات این صفحه فقط برای همین مرکز اعمال می‌شود.</p></div><a class="ensha-secondary-btn" href="{{ route('appointments.calendar') }}"><i class="ki-filled ki-calendar-8"></i> مشاهده تقویم</a></div>
 
 <div class="appointment-tabs" role="tablist" aria-label="بخش‌های تنظیمات نوبت‌دهی">
-@foreach(['policy'=>['قوانین ثبت نوبت','ki-setting-2'],'discounts'=>['تخفیف‌ها','ki-discount'],'mappings'=>['تخصص و تعرفه','ki-profile-user'],'statuses'=>['وضعیت‌های نوبت','ki-check-circle'],'records'=>['تنظیمات پرونده','ki-folder'],'permissions'=>['دسترسی فیلدها','ki-shield-tick']] as $key=>$tab)<button type="button" class="appointment-tab {{ $loop->first?'active':'' }}" data-tab="{{ $key }}" role="tab" aria-selected="{{ $loop->first?'true':'false' }}"><i class="ki-filled {{ $tab[1] }}"></i>{{ $tab[0] }}</button>@endforeach
+@foreach(['policy'=>['قوانین ثبت نوبت','ki-setting-2'],'discounts'=>['تخفیف‌ها','ki-discount'],'mappings'=>['تخصص و تعرفه','ki-profile-user'],'report-templates'=>['فرم گزارش جلسه','ki-notepad-edit'],'statuses'=>['وضعیت‌های نوبت','ki-check-circle'],'records'=>['تنظیمات پرونده','ki-folder'],'permissions'=>['دسترسی فیلدها','ki-shield-tick']] as $key=>$tab)<button type="button" class="appointment-tab {{ $loop->first?'active':'' }}" data-tab="{{ $key }}" role="tab" aria-selected="{{ $loop->first?'true':'false' }}"><i class="ki-filled {{ $tab[1] }}"></i>{{ $tab[0] }}</button>@endforeach
 </div>
 
 <section class="appointment-pane active" data-pane="policy">
@@ -31,6 +31,8 @@
 @forelse($mappings as $m)<tr><td><strong>{{ $m->counselor_name }}</strong></td><td>{{ $m->topic_name }}</td><td>{{ $m->price_override!==null ? number_format($m->price_override).' ریال':'تعرفه عمومی' }}</td><td>{{ $m->duration_override ? $m->duration_override.' دقیقه':'پیش‌فرض' }}</td><td>{{ $m->valid_from ?: 'همیشگی' }}{{ $m->valid_until ? ' تا '.$m->valid_until:'' }}</td><td><span class="ensha-status {{ $m->is_active?'success':'warning' }}">{{ $m->is_active?'فعال':'غیرفعال' }}</span></td></tr>@empty<tr><td colspan="6" class="ensha-table-empty">هنوز موضوعی به مشاوران تخصیص داده نشده است.</td></tr>@endforelse
 </tbody></table></div></section>
 
+@include('appointments.partials.session-report-settings')
+
 <section class="appointment-pane" data-pane="statuses" hidden>
 <div class="settings-card-head"><div><h3>وضعیت‌های نوبت</h3><p>رنگ و رفتار وضعیت‌های گردش کار نوبت را تعیین کنید.</p></div></div>
 <form method="post" action="{{ route('centres.appointments-settings.statuses.store',$centre) }}" class="settings-form-grid">@csrf<label>عنوان<input class="kt-input" name="name" required></label><label>کلید انگلیسی<input class="kt-input" name="slug" required></label><label>ترتیب<input class="kt-input" name="sort_order" type="number" min="0" value="99"></label><label>رنگ نشانگر<input class="kt-input color-input" name="indicator_color" type="color" value="#16a34a"></label><label>رنگ متن<input class="kt-input color-input" name="text_color" type="color" value="#111827"></label><label class="check-line"><input type="checkbox" name="is_final" value="1"> نهایی</label><label class="check-line"><input type="checkbox" name="blocks_slot" value="1" checked> اشغال زمان</label><div class="form-submit"><button class="kt-btn kt-btn-primary">ثبت وضعیت</button></div></form>
@@ -45,4 +47,4 @@
 <div class="settings-card-head"><div><h3>دسترسی فیلدهای پویای مراجع</h3><p>سطح مشاهده و ویرایش هر فیلد را برای نقش‌ها تعیین کنید.</p></div></div>
 <form method="post" action="{{ route('centres.appointments-settings.records.permissions',$centre) }}" class="settings-form-grid">@csrf<label>فیلد<select class="kt-select" name="field_id">@foreach($fields as $f)<option value="{{ $f->id }}">{{ $f->label }}</option>@endforeach</select></label><label>نقش<select class="kt-select" name="role">@foreach(['manager'=>'مدیر','secretary'=>'منشی','counselor'=>'مشاور','client'=>'مراجع'] as $role=>$title)<option value="{{ $role }}">{{ $title }}</option>@endforeach</select></label><label class="check-line"><input type="checkbox" name="can_view" value="1"> مشاهده</label><label class="check-line"><input type="checkbox" name="can_edit" value="1"> ویرایش</label><div class="form-submit"><button class="kt-btn kt-btn-primary">ذخیره دسترسی</button></div></form></section>
 @endsection
-@push('scripts')<script src="{{ asset('js/appointments-settings.js').'?v=0.18.8' }}"></script>@endpush
+@push('scripts')<script src="{{ asset('js/appointments-settings.js').'?v=0.19.0' }}"></script>@endpush

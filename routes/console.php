@@ -284,3 +284,38 @@ Artisan::command('ensha:verify-stage06-complete', function () {
     if ($errors) { foreach ($errors as $error) $this->error($error); return 1; }
     $this->info('VERIFY_STAGE06_COMPLETE_OK'); return 0;
 })->purpose('Verify Stage 06 scheduling, records, leave and attendance / v0.18.2');
+
+Artisan::command('ensha:verify-stage07-complete', function () {
+    $errors=[];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.19.0') $errors[]='VERSION باید 0.19.0 باشد.';
+    foreach (['session_report_templates','session_reports','session_report_addenda'] as $table) {
+        if (! Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    }
+    if (! Schema::hasColumn('counselling_sessions','appointment_id')) $errors[]='اتصال جلسه به نوبت وجود ندارد.';
+    foreach (['appointment_id','counselling_session_id','structured_answers','content_hash','finalized_at'] as $column) {
+        if (Schema::hasTable('session_reports') && ! Schema::hasColumn('session_reports',$column)) $errors[]="ستون session_reports.{$column} وجود ندارد.";
+    }
+    foreach (['session_reports.view','session_reports.manage','session_report_templates.manage'] as $permission) {
+        if (! DB::table('permissions')->where('slug',$permission)->where('is_active',true)->exists()) $errors[]="مجوز {$permission} ثبت نشده است.";
+    }
+    foreach (['counselor.workspace','counselor.reports.show','counselor.reports.save','counselor.reports.finalize','counselor.sessions.start','counselor.sessions.complete','centres.appointments-settings.report-templates.store'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    }
+    foreach (['app/Http/Controllers/CounselorClinicalController.php','resources/views/counselor/workspace.blade.php','resources/views/counselor/session-report.blade.php','public/css/stage07-clinical.css','public/js/stage07-clinical.js'] as $file) {
+        if (! file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    }
+    if (Schema::hasTable('centres') && Schema::hasTable('session_report_templates')) {
+        foreach (DB::table('centres')->pluck('id') as $centreId) {
+            if (! DB::table('session_report_templates')->where('centre_id',$centreId)->where('is_active',true)->exists()) $errors[]="مرکز {$centreId} فرم گزارش فعال ندارد.";
+        }
+    }
+    $managerPermissions=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','manager')->whereIn('p.slug',['session_reports.view','session_report_templates.manage'])->distinct()->count('p.slug');
+    if ($managerPermissions!==2) $errors[]='مجوزهای مدیر برای گزارش جلسه کامل نیست.';
+    $counselorPermissions=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','counselor')->whereIn('p.slug',['session_reports.view','session_reports.manage'])->distinct()->count('p.slug');
+    if ($counselorPermissions!==2) $errors[]='مجوزهای مشاور برای گزارش جلسه کامل نیست.';
+    if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE07_COMPLETE_OK');
+    return 0;
+})->purpose('Verify Ensha Stage 07 counselor workspace and session reports / v0.19.0');

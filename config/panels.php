@@ -62,6 +62,7 @@ return [
         ],
         'counselor' => [
             ['section'=>'کار من'],
+            ['label'=>'جلسات و گزارش‌های من','slug'=>'counselor-workspace','route'=>'counselor.workspace','permission'=>'session_reports.view','icon'=>'ki-filled ki-notepad-edit'],
             ['label'=>'تقویم و مرخصی من','slug'=>'my-calendar','route'=>'counselor.week','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-8'],
             ['label'=>'نوبت‌های من','slug'=>'my-appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-tick'],
             ['label'=>'پرونده‌های مشاوره','slug'=>'cases','route'=>'cases.index','permission'=>'cases.view','icon'=>'ki-filled ki-folder'],

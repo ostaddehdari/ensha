@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Centre;
 use App\Models\ProfileField;
+use App\Models\SessionReportTemplate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -32,7 +33,9 @@ class Stage06SettingsController extends Controller
         $record=DB::table('client_record_settings')->where('centre_id',$centreId)->first();
         $bookingPolicy=\App\Services\BookingPolicy::forCentre($centreId);
         $fieldPermissions=DB::table('client_profile_field_permissions')->where('centre_id',$centreId)->get()->keyBy(fn ($v) => $v->profile_field_id.'_'.$v->role);
-        return view('appointments.stage06-settings',compact('centre','centreId','discounts','statuses','topics','counselors','mappings','fields','record','fieldPermissions','bookingPolicy'));
+        SessionReportTemplate::ensureDefault($centreId);
+        $reportTemplates=SessionReportTemplate::with('topic')->where('centre_id',$centreId)->orderByDesc('is_active')->orderByDesc('version')->get();
+        return view('appointments.stage06-settings',compact('centre','centreId','discounts','statuses','topics','counselors','mappings','fields','record','fieldPermissions','bookingPolicy','reportTemplates'));
     }
     public function bookingPolicy(Request $request, Centre $centre)
     {
@@ -104,5 +107,66 @@ class Stage06SettingsController extends Controller
         DB::table('client_profile_field_permissions')->updateOrInsert(['centre_id'=>$centreId,'profile_field_id'=>$d['field_id'],'role'=>$d['role']],
             ['can_view'=>(bool) ($d['can_view']??false),'can_edit'=>(bool) ($d['can_edit']??false)]);
         return redirect()->to(route('centres.appointments-settings.index',$centre).'#permissions')->with('success','دسترسی فیلد ثبت شد.');
+    }
+
+    public function reportTemplate(Request $request, Centre $centre)
+    {
+        $centreId=$this->centre($request, $centre);
+        abort_unless($request->user()->hasPermission('session_report_templates.manage'),403);
+        $data=$request->validate([
+            'name'=>'required|string|max:150',
+            'topic_id'=>'nullable|integer|exists:service_topics,id',
+            'is_default'=>'nullable|boolean',
+            'fields'=>'required|array|min:1|max:30',
+            'fields.*.label'=>'required|string|max:150',
+            'fields.*.type'=>['required',Rule::in(['checkbox','text','textarea','select','number'])],
+            'fields.*.options'=>'nullable|string|max:2000',
+            'fields.*.required'=>'nullable|boolean',
+        ]);
+        if (! empty($data['topic_id'])) {
+            abort_unless(DB::table('service_topics as t')->join('service_categories as c','c.id','=','t.category_id')
+                ->where('t.id',$data['topic_id'])->where('c.centre_id',$centreId)->exists(),422,'موضوع متعلق به این مرکز نیست.');
+        }
+        $templateFields=[];
+        foreach (array_values($data['fields']) as $index=>$field) {
+            $options=array_values(array_filter(array_map('trim',preg_split('/[|،,\r\n]+/u',(string)($field['options']??'')))));
+            if ($field['type']==='select' && count($options)<2) {
+                throw \Illuminate\Validation\ValidationException::withMessages(["fields.{$index}.options"=>'برای فهرست انتخابی حداقل دو گزینه وارد کنید.']);
+            }
+            $templateFields[]=[
+                'key'=>'field_'.($index+1).'_'.substr(sha1($field['label']),0,8),
+                'label'=>$field['label'],
+                'type'=>$field['type'],
+                'required'=>(bool)($field['required']??false),
+                'options'=>$field['type']==='select'?$options:[],
+            ];
+        }
+        DB::transaction(function () use ($request,$centreId,$data,$templateFields) {
+            $version=((int)SessionReportTemplate::where('centre_id',$centreId)->where('topic_id',$data['topic_id']??null)
+                ->where('name',$data['name'])->max('version'))+1;
+            if (! empty($data['is_default'])) {
+                SessionReportTemplate::where('centre_id',$centreId)->where('topic_id',$data['topic_id']??null)->update(['is_default'=>false]);
+            }
+            SessionReportTemplate::create([
+                'centre_id'=>$centreId,
+                'topic_id'=>$data['topic_id']??null,
+                'name'=>$data['name'],
+                'version'=>$version,
+                'fields'=>$templateFields,
+                'is_default'=>(bool)($data['is_default']??false),
+                'is_active'=>true,
+                'created_by'=>$request->user()->id,
+            ]);
+        });
+        return redirect()->to(route('centres.appointments-settings.index',$centre).'#report-templates')->with('success','فرم گزارش جلسه ثبت شد.');
+    }
+
+    public function toggleReportTemplate(Request $request, Centre $centre, SessionReportTemplate $template)
+    {
+        $centreId=$this->centre($request, $centre);
+        abort_unless($request->user()->hasPermission('session_report_templates.manage'),403);
+        abort_unless((int)$template->centre_id===$centreId,404);
+        $template->update(['is_active'=>!$template->is_active]);
+        return redirect()->to(route('centres.appointments-settings.index',$centre).'#report-templates')->with('success','وضعیت فرم گزارش تغییر کرد.');
     }
 }

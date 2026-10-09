@@ -39,6 +39,7 @@
             'leaves' => request()->routeIs('module.leaves') || request()->routeIs('centres.leaves'),
             'rooms' => request()->routeIs('module.rooms') || request()->routeIs('centres.rooms'),
             'appointments-settings' => request()->routeIs('centres.appointments-settings.*'),
+            'counselor-workspace' => request()->routeIs('counselor.workspace') || request()->routeIs('counselor.reports.*') || request()->routeIs('counselor.sessions.*'),
             'appointments', 'my-appointments', 'my-calendar', 'new-appointment' => request()->routeIs('appointments.*'),
             default => request()->routeIs('module') && request()->route('module') === $slug,
         };
@@ -83,6 +84,7 @@
                         elseif (($item['slug'] ?? '') === 'branches') $href = auth()->user()->centre_id ? route('centres.branches.index', auth()->user()->centre_id) : route('centres.index');
                         elseif (($item['slug'] ?? '') === 'centre-settings') $href = auth()->user()->centre_id ? route('centres.settings.edit', auth()->user()->centre_id) : route('centres.index');
                         elseif (($item['slug'] ?? '') === 'appointments-settings') $href = auth()->user()->centre_id ? route('centres.appointments-settings.index', auth()->user()->centre_id) : route('centres.index');
+                        elseif (($item['slug'] ?? '') === 'counselor-workspace') $href = route('counselor.workspace');
                         elseif (!($item['fake'] ?? false)) $href = route('module', ['module' => $item['slug']]);
                         $isActive = $activeFor($item['slug'] ?? '');
                     @endphp

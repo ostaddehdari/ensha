@@ -21,8 +21,8 @@ class Appointment extends Model
         'completed' => [], 'cancelled' => [], 'no_show' => [],
     ];
 
-    protected $fillable = ['appointment_number', 'centre_id', 'branch_id', 'client_id', 'case_id', 'topic_id', 'counselor_id', 'room_id', 'slot_id', 'tariff_id', 'seat_number', 'mode', 'starts_at', 'ends_at', 'status', 'price', 'counselor_pay', 'currency', 'notes', 'cancellation_reason', 'created_by', 'public_id','source','duration_minutes','base_price','final_price','paid_amount','balance_amount','discount_id','discount_value_snapshot','discount_type_snapshot','topic_name_snapshot','topic_color_snapshot','unit_price_snapshot','status_id','status_snapshot','payment_note','updated_by'];
-    protected function casts(): array { return ['starts_at' => 'datetime', 'ends_at' => 'datetime']; }
+    protected $fillable = ['appointment_number', 'centre_id', 'branch_id', 'client_id', 'case_id', 'topic_id', 'counselor_id', 'room_id', 'slot_id', 'tariff_id', 'seat_number', 'mode', 'starts_at', 'ends_at', 'status', 'price', 'counselor_pay', 'currency', 'notes', 'cancellation_reason', 'created_by', 'public_id','source','duration_minutes','base_price','final_price','paid_amount','balance_amount','discount_id','discount_value_snapshot','discount_type_snapshot','topic_name_snapshot','topic_color_snapshot','unit_price_snapshot','status_id','status_snapshot','payment_note','updated_by','checked_in_at','checked_in_by','session_started_at','session_ended_at','no_show_at'];
+    protected function casts(): array { return ['starts_at' => 'datetime', 'ends_at' => 'datetime', 'checked_in_at' => 'datetime', 'session_started_at' => 'datetime', 'session_ended_at' => 'datetime', 'no_show_at' => 'datetime']; }
     public function client(): BelongsTo { return $this->belongsTo(Client::class); }
     public function case(): BelongsTo { return $this->belongsTo(CounsellingCase::class, 'case_id'); }
     public function topic(): BelongsTo { return $this->belongsTo(ServiceTopic::class, 'topic_id'); }
@@ -30,6 +30,8 @@ class Appointment extends Model
     public function slot(): BelongsTo { return $this->belongsTo(AppointmentSlot::class, 'slot_id'); }
     public function tariff(): BelongsTo { return $this->belongsTo(ServiceTariff::class, 'tariff_id'); }
     public function histories(): HasMany { return $this->hasMany(AppointmentStatusHistory::class); }
+    public function counsellingSession(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(CounsellingSession::class); }
+    public function sessionReport(): \Illuminate\Database\Eloquent\Relations\HasOne { return $this->hasOne(SessionReport::class); }
     public function canTransitionTo(string $status): bool {
         if (in_array($status, self::TRANSITIONS[$this->status] ?? [], true)) return true;
         $current=\Illuminate\Support\Facades\DB::table('appointment_statuses')->where('centre_id',$this->centre_id)->where('slug',$this->status)->first();

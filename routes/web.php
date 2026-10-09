@@ -34,6 +34,7 @@ use App\Http\Controllers\Stage06ClientController;
 use App\Http\Controllers\Stage06SettingsController;
 use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\CounselorWorkspaceController;
+use App\Http\Controllers\CounselorClinicalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -160,6 +161,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/mappings', [Stage06SettingsController::class,'mapping'])->name('mappings.store');
             Route::post('/record-settings', [Stage06SettingsController::class,'record'])->name('records.settings');
             Route::post('/field-permissions', [Stage06SettingsController::class,'fieldPermission'])->name('records.permissions');
+            Route::post('/session-report-templates', [Stage06SettingsController::class,'reportTemplate'])->middleware('throttle:sensitive')->name('report-templates.store');
+            Route::patch('/session-report-templates/{template}/toggle', [Stage06SettingsController::class,'toggleReportTemplate'])->middleware('throttle:sensitive')->name('report-templates.toggle');
         });
         Route::get('/attendance', [StaffAttendanceController::class,'index'])->name('attendance.index');
         Route::post('/attendance/start', [StaffAttendanceController::class,'start'])->middleware('throttle:sensitive')->name('attendance.start');
@@ -169,6 +172,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/counselor/week', [CounselorWorkspaceController::class,'index'])->name('counselor.week');
         Route::post('/counselor/leave', [CounselorWorkspaceController::class,'requestLeave'])->name('counselor.leave');
         Route::post('/counselor/leave/{leave}/review', [CounselorWorkspaceController::class,'reviewLeave'])->name('counselor.leave.review');
+        Route::get('/counselor/workspace', [CounselorClinicalController::class,'index'])->name('counselor.workspace');
+        Route::get('/counselor/appointments/{appointment}/report', [CounselorClinicalController::class,'show'])->name('counselor.reports.show');
+        Route::post('/counselor/appointments/{appointment}/start', [CounselorClinicalController::class,'start'])->middleware('throttle:sensitive')->name('counselor.sessions.start');
+        Route::post('/counselor/appointments/{appointment}/complete', [CounselorClinicalController::class,'complete'])->middleware('throttle:sensitive')->name('counselor.sessions.complete');
+        Route::put('/counselor/appointments/{appointment}/report', [CounselorClinicalController::class,'save'])->middleware('throttle:sensitive')->name('counselor.reports.save');
+        Route::patch('/counselor/appointments/{appointment}/report/finalize', [CounselorClinicalController::class,'finalize'])->middleware('throttle:sensitive')->name('counselor.reports.finalize');
+        Route::post('/counselor/appointments/{appointment}/report/addenda', [CounselorClinicalController::class,'addendum'])->middleware('throttle:sensitive')->name('counselor.reports.addendum');
 
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/export', [UserController::class, 'export'])->middleware('throttle:exports')->name('users.export');
