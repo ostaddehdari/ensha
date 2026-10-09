@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class AppointmentRescheduleService
 {
-    public function move(Appointment $appointment, AppointmentSlot $target, int $actorId, bool $allowPastManual = false): Appointment
+    public function move(Appointment $appointment, AppointmentSlot $target, int $actorId, bool $allowPastManual = false, ?string $reason = null): Appointment
     {
         $source = AppointmentSlot::findOrFail($appointment->slot_id);
         $keys = app(AppointmentResourceLockService::class)->keys(
@@ -23,12 +23,12 @@ class AppointmentRescheduleService
             (bool) ($source->room_id || $target->room_id),
         );
 
-        return app(AppointmentResourceLockService::class)->block($keys, function () use ($appointment, $target, $actorId, $allowPastManual) {
-            return DB::transaction(function () use ($appointment, $target, $actorId, $allowPastManual) {
+        return app(AppointmentResourceLockService::class)->block($keys, function () use ($appointment, $target, $actorId, $allowPastManual, $reason) {
+            return DB::transaction(function () use ($appointment, $target, $actorId, $allowPastManual, $reason) {
                 $current = Appointment::lockForUpdate()->findOrFail($appointment->id);
                 $target = AppointmentSlot::lockForUpdate()->findOrFail($target->id);
 
-                return $this->moveLocked($current, $target, $actorId, $allowPastManual);
+                return $this->moveLocked($current, $target, $actorId, $allowPastManual, $reason);
             }, 3);
         });
     }
@@ -165,7 +165,7 @@ class AppointmentRescheduleService
         return $appointment->fresh();
     }
 
-    private function moveLocked(Appointment $current, AppointmentSlot $target, int $actorId, bool $allowPastManual): Appointment
+    private function moveLocked(Appointment $current, AppointmentSlot $target, int $actorId, bool $allowPastManual, ?string $reason = null): Appointment
     {
         if ($target->id === $current->slot_id) {
             return $current;
@@ -214,7 +214,7 @@ class AppointmentRescheduleService
             'from_status' => $current->status,
             'to_status' => $current->status,
             'changed_by' => $actorId,
-            'reason' => 'جابجایی زمان یا مشاور',
+            'reason' => $reason ?: 'جابجایی زمان یا مشاور',
             'metadata' => ['old_slot_id' => $old->id, 'new_slot_id' => $target->id],
             'changed_at' => now(),
         ]);

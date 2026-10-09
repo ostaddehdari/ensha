@@ -3,7 +3,8 @@
   "scripts": {
     "test": "playwright test stage12-calendar.spec.js",
     "test:w02": "playwright test p1-s03-w02-calendar.spec.js",
-    "test:w03": "playwright test p1-s03-w03-live-acceptance.spec.js"
+    "test:w03": "playwright test p1-s03-w03-live-acceptance.spec.js",
+    "test:s07w01": "playwright test p1-s07-w01-operational-cycle.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1"

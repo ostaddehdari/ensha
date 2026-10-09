@@ -90,7 +90,7 @@ class AppointmentBookingService
             $appointment->update(['status' => $status, 'status_id'=>$statusRecord?->id,'status_snapshot'=>$statusRecord?->name ?? $status,
                 'updated_by'=>$actorId,'cancellation_reason' => $status === 'cancelled' ? $reason : $appointment->cancellation_reason]);
             AppointmentStatusHistory::create(['appointment_id' => $appointment->id, 'from_status' => $from, 'to_status' => $status, 'changed_by' => $actorId, 'reason' => $reason, 'changed_at' => now()]);
-            if ($status === 'cancelled' || ($statusRecord && ! $statusRecord->blocks_slot && $statusRecord->is_final)) {
+            if (in_array($status, ['cancelled', 'no_show'], true) || ($statusRecord && ! $statusRecord->blocks_slot && $statusRecord->is_final)) {
                 $slot = AppointmentSlot::query()->lockForUpdate()->find($appointment->slot_id);
                 if ($slot) $slot->update(['booked_count' => max(0, $slot->booked_count - 1), 'status' => 'available', 'lock_version' => $slot->lock_version + 1]);
             }
