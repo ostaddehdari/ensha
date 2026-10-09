@@ -36,6 +36,8 @@ use App\Http\Controllers\StaffAttendanceController;
 use App\Http\Controllers\CounselorWorkspaceController;
 use App\Http\Controllers\CounselorClinicalController;
 use App\Http\Controllers\SessionRecordingController;
+use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\PaymentReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -116,6 +118,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/cases/{case}/notes/{note}/addenda', [CaseClinicalController::class, 'storeAddendum'])->name('cases.notes.addenda.store');
 
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+        Route::prefix('/finance')->name('finance.')->group(function () {
+            Route::get('/cashier', [FinanceController::class, 'index'])->name('cashier.index');
+            Route::post('/cash-register/open', [FinanceController::class, 'openRegister'])->middleware('throttle:sensitive')->name('cash-register.open');
+            Route::post('/cash-register/{session}/close', [FinanceController::class, 'closeRegister'])->middleware('throttle:sensitive')->name('cash-register.close');
+            Route::post('/appointments/{appointment}/payments', [FinanceController::class, 'payment'])->middleware('throttle:sensitive')->name('payments.store');
+            Route::post('/transactions/{transaction}/refund', [FinanceController::class, 'refund'])->middleware('throttle:sensitive')->name('transactions.refund');
+            Route::post('/transactions/{transaction}/void', [FinanceController::class, 'void'])->middleware('throttle:sensitive')->name('transactions.void');
+            Route::get('/receipts/{receipt}', [PaymentReceiptController::class, 'show'])->name('receipts.show');
+        });
         Route::get('/operations', [DailyOperationsController::class, 'index'])->name('operations.index');
         Route::post('/operations/appointments/{appointment}/check-in', [DailyOperationsController::class, 'checkIn'])->middleware('throttle:sensitive')->name('operations.check-in');
         Route::post('/operations/appointments/{appointment}/start', [DailyOperationsController::class, 'startSession'])->middleware('throttle:sensitive')->name('operations.start');

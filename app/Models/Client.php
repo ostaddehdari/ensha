@@ -34,6 +34,7 @@ class Client extends \Illuminate\Database\Eloquent\Model
     public function consents(): HasMany { return $this->hasMany(ClientConsent::class); }
     public function privateFiles(): HasMany { return $this->hasMany(PrivateFile::class); }
     public function appointments(): HasMany { return $this->hasMany(Appointment::class); }
+    public function paymentTransactions(): HasMany { return $this->hasMany(PaymentTransaction::class); }
     public function mergedInto(): BelongsTo { return $this->belongsTo(self::class, 'merged_into_id'); }
     public function mergedSources(): HasMany { return $this->hasMany(self::class, 'merged_into_id'); }
 

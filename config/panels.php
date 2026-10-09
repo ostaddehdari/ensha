@@ -5,13 +5,14 @@ return [
         'super_admin' => 'ادمین سیستم',
         'manager' => 'مدیر مرکز مشاوره',
         'secretary' => 'منشی',
+        'finance' => 'مسئول مالی',
         'counselor' => 'مشاور',
         'test_manager' => 'مسئول تست',
         'client' => 'مراجعه‌کننده',
     ],
     'role_colors' => [
         'super_admin' => 'danger', 'manager' => 'primary', 'secretary' => 'success',
-        'counselor' => 'warning', 'test_manager' => 'info', 'client' => 'slate',
+        'finance' => 'violet', 'counselor' => 'warning', 'test_manager' => 'info', 'client' => 'slate',
     ],
     // Curated primary navigation. Each link has a real GET route and an explicit role.
     // Sidebar additionally checks the effective permission of the active assignment.
@@ -45,6 +46,8 @@ return [
             ['label'=>'نوبت‌ها و تقویم','slug'=>'appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-8'],
             ['label'=>'عملیات روزانه','slug'=>'operations','route'=>'operations.index','permission'=>'appointments.manage','icon'=>'ki-filled ki-check-circle'],
             ['label'=>'تنظیمات نوبت‌دهی','slug'=>'appointments-settings','route'=>'centres.appointments-settings.index','centre'=>true,'permission'=>'appointments.manage','icon'=>'ki-filled ki-setting-2'],
+            ['section'=>'مالی'],
+            ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
         ],
         'secretary' => [
             ['section'=>'عملیات منشی'],
@@ -59,6 +62,13 @@ return [
             ['label'=>'مرخصی مشاوران','slug'=>'leaves','route'=>'centres.leaves','centre'=>true,'permission'=>'schedules.view','icon'=>'ki-filled ki-calendar-remove'],
             ['label'=>'اتاق‌ها','slug'=>'rooms','route'=>'centres.rooms','centre'=>true,'permission'=>'schedules.view','icon'=>'ki-filled ki-home-2'],
             ['label'=>'حضور و غیاب','slug'=>'attendance','route'=>'attendance.index','icon'=>'ki-filled ki-time'],
+            ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
+        ],
+        'finance' => [
+            ['section'=>'عملیات مالی'],
+            ['label'=>'صندوق و دریافت‌ها','slug'=>'finance-cashier','route'=>'finance.cashier.index','permission'=>'payments.view','icon'=>'ki-filled ki-wallet'],
+            ['label'=>'نوبت‌ها و مانده‌ها','slug'=>'appointments','route'=>'appointments.index','permission'=>'appointments.view','icon'=>'ki-filled ki-calendar-tick'],
+            ['label'=>'مراجعین','slug'=>'clients','route'=>'clients.index','permission'=>'clients.view','icon'=>'ki-filled ki-people'],
         ],
         'counselor' => [
             ['section'=>'کار من'],
@@ -94,5 +104,6 @@ return [
         ['label' => 'پایش سیستم', 'slug' => 'monitoring', 'icon' => 'ki-filled ki-chart-line-up', 'permission' => 'monitoring.view'],
         ['label' => 'لاگ‌ها و رویدادها', 'slug' => 'audit-logs', 'icon' => 'ki-filled ki-notepad', 'permission' => 'audit_logs.view'],
         ['label' => 'گزارش‌های سامانه', 'slug' => 'reports', 'icon' => 'ki-filled ki-document', 'permission' => 'reports.view'],
+        ['label' => 'صندوق و دریافت‌ها', 'slug' => 'finance-cashier', 'icon' => 'ki-filled ki-wallet', 'permission' => 'payments.view'],
     ],
 ];

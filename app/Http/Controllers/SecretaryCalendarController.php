@@ -84,9 +84,9 @@ class SecretaryCalendarController extends Controller
     public function quote(Request $request, AppointmentPricingService $pricing)
     {
         abort_unless($request->user()->hasPermission('appointments.manage'),403);
-        $data=$request->validate(['slot_id'=>'required|integer','discount_id'=>'nullable|integer','paid_amount'=>'nullable|integer|min:0']);
+        $data=$request->validate(['slot_id'=>'required|integer','discount_id'=>'nullable|integer']);
         $slot=AppointmentSlot::with('topic')->where('centre_id',$request->user()->centre_id)->findOrFail($data['slot_id']);
-        return response()->json($pricing->quote($slot,$data['discount_id']??null,(int) ($data['paid_amount']??0)));
+        return response()->json($pricing->quote($slot,$data['discount_id']??null,0));
     }
 
     public function store(Request $request, AppointmentBookingService $booking)
@@ -101,8 +101,7 @@ class SecretaryCalendarController extends Controller
             'last_name' => 'required_without:client_id|nullable|string|max:100',
             'phone' => 'nullable|string|max:20', 'national_id' => 'nullable|string|max:20',
             'case_id' => 'nullable|integer|exists:cases,id', 'notes' => 'nullable|string|max:2000',
-            'discount_id' => 'nullable|integer', 'paid_amount' => 'nullable|integer|min:0',
-            'payment_note' => 'nullable|string|max:2000',
+            'discount_id' => 'nullable|integer',
         ]);
         $centreId = (int) $request->user()->centre_id;
         $client = ! empty($data['client_id']) ? Client::where('centre_id', $centreId)->where('status', 'active')->whereNull('merged_into_id')->findOrFail($data['client_id']) : null;
@@ -155,8 +154,7 @@ class SecretaryCalendarController extends Controller
                             ]);
                         }
                         return $booking->book($slot->id, $client->id, $data['case_id'] ?? null, $request->user()->id,
-                            $data['notes'] ?? null, ['source' => 'secretary', 'discount_id' => $data['discount_id'] ?? null,
-                                'paid_amount' => $data['paid_amount'] ?? 0, 'payment_note' => $data['payment_note'] ?? null]);
+                            $data['notes'] ?? null, ['source' => 'secretary', 'discount_id' => $data['discount_id'] ?? null]);
                     });
                 });
             return response()->json($this->event($appointment->load(['client.user', 'topic', 'counselor', 'slot.room'])), 201);

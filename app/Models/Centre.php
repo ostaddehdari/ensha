@@ -52,4 +52,7 @@ class Centre extends Model
     {
         return $this->hasMany(UserRoleCentre::class);
     }
+
+    public function paymentTransactions(): HasMany { return $this->hasMany(PaymentTransaction::class); }
+    public function cashRegisterSessions(): HasMany { return $this->hasMany(CashRegisterSession::class); }
 }

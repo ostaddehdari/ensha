@@ -69,6 +69,16 @@ class User extends Authenticatable
         return $this->hasMany(Appointment::class, 'counselor_id');
     }
 
+    public function cashRegisterSessions(): HasMany
+    {
+        return $this->hasMany(CashRegisterSession::class, 'cashier_id');
+    }
+
+    public function createdPaymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class, 'created_by');
+    }
+
     public function assignedRole(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id');

@@ -50,10 +50,12 @@ class AppointmentController extends Controller
     {
         abort_unless($request->user()->hasPermission('appointments.view'), 403);
         abort_unless(Appointment::visibleTo($request->user())->whereKey($appointment)->exists(), 403);
-        $appointment->load(['client.user', 'case', 'topic', 'counselor', 'slot.room', 'tariff', 'histories.actor']);
+        $appointment->load(['client.user', 'case', 'topic', 'counselor', 'slot.room', 'tariff', 'histories.actor',
+            'paymentTransactions' => fn ($query) => $query->with(['receipt', 'creator', 'parent'])->orderByDesc('occurred_at')]);
         $statuses = \Illuminate\Support\Facades\DB::table('appointment_statuses')->where('centre_id',$appointment->centre_id)
             ->where('is_active',true)->orderBy('sort_order')->get();
-        return view('appointments.show', compact('appointment','statuses'));
+        $openRegister = \App\Models\CashRegisterSession::where('cashier_id', $request->user()->id)->where('status', 'open')->first();
+        return view('appointments.show', compact('appointment','statuses','openRegister'));
     }
 
     public function transition(Request $request, Appointment $appointment, AppointmentBookingService $booking)

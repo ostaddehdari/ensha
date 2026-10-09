@@ -22,7 +22,7 @@
 <p>نوبت برای زمان انتخاب‌شده در تقویم و به‌صورت حضوری ثبت می‌شود. تداخل و ساعت کاری هنگام ثبت بررسی می‌شود.</p>
 <label>تخفیف<select name="discount_id"><option value="">بدون تخفیف</option>@foreach($discounts as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach</select></label>
 <div class="stage06-pricing" data-pricing>مبلغ نهایی هنگام ثبت بر اساس مدت واردشده محاسبه می‌شود.</div>
-<label>مبلغ پرداختی<input name="paid_amount" type="number" min="0" value="0"></label><label>یادداشت پرداخت<input name="payment_note"></label><label>توضیح<textarea name="notes" maxlength="2000"></textarea></label>
+<div class="stage06-pricing">پس از ثبت نوبت، دریافت وجه و صدور رسید از صفحه صندوق انجام می‌شود.</div><label>توضیح<textarea name="notes" maxlength="2000"></textarea></label>
 <button class="ensha-primary-btn" type="submit">ثبت نهایی نوبت</button><p data-drawer-error role="alert"></p></form></div></aside>
 @endsection
 @push('scripts')<script src="{{ asset('vendor/daypilot/daypilot-javascript.min.js') }}"></script><script src="{{ asset('js/stage06-scheduler.js').'?v=0.18.9' }}"></script>@endpush

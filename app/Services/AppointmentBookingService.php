@@ -35,7 +35,8 @@ class AppointmentBookingService
                 if ($counselorBusy) throw ValidationException::withMessages(['slot_id' => 'مشاور در این بازه نوبت فعال دیگری دارد.']);
 
                 $tariff = $this->tariff($slot);
-                $quote = app(AppointmentPricingService::class)->quote($slot, $options['discount_id'] ?? null, (int) ($options['paid_amount'] ?? 0), $tariff?->price);
+                // Stage 09: money is posted only through the immutable payment ledger.
+                $quote = app(AppointmentPricingService::class)->quote($slot, $options['discount_id'] ?? null, 0, $tariff?->price);
                 if (! $tariff && ! $slot->topic->price && ! $quote['unit_price_snapshot']) throw ValidationException::withMessages(['slot_id'=>'تعرفه معتبر نیست.']);
                 if (! $caseId) {
                     $setting = DB::table('client_record_settings')->where('centre_id',$slot->centre_id)->first();
@@ -61,7 +62,7 @@ class AppointmentBookingService
                     'public_id'=>$publicId,'source'=>$options['source'] ?? 'secretary',
                     'topic_name_snapshot'=>$slot->topic->name,'topic_color_snapshot'=>$slot->topic->color,
                     'status_id'=>$status?->id,'status_snapshot'=>$status?->name ?? 'نوبت',
-                    'payment_note'=>$options['payment_note'] ?? null,'updated_by'=>$actorId,
+                    'payment_note'=>null,'updated_by'=>$actorId,
                     ...$quote,
                     'counselor_pay' => $tariff?->counselor_pay ?? 0, 'currency' => $tariff?->currency ?? 'IRR',
                     'notes' => $notes, 'created_by' => $actorId,

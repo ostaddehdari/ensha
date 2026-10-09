@@ -351,3 +351,46 @@ Artisan::command('ensha:verify-stage08-complete', function () {
     $this->info('VERIFY_STAGE08_COMPLETE_OK');
     return 0;
 })->purpose('Verify Ensha Stage 08 secure session recording and transcription / v0.20.0');
+
+Artisan::command('ensha:verify-stage09-complete', function () {
+    $errors=[];
+    if (trim((string) @file_get_contents(base_path('VERSION'))) !== '0.21.0') $errors[]='VERSION باید 0.21.0 باشد.';
+    foreach (['financial_sequences','cash_register_sessions','payment_transactions','payment_receipts'] as $table) {
+        if (! Schema::hasTable($table)) $errors[]="جدول {$table} وجود ندارد.";
+    }
+    foreach (['payment_status','financial_updated_at'] as $column) {
+        if (! Schema::hasColumn('appointments',$column)) $errors[]="ستون appointments.{$column} وجود ندارد.";
+    }
+    $columns=[
+        'cash_register_sessions'=>['public_id','session_number','cashier_id','opening_cash_amount','expected_cash_amount','counted_cash_amount','difference_amount','status'],
+        'payment_transactions'=>['public_id','transaction_number','appointment_id','cash_register_session_id','parent_transaction_id','kind','method','amount','signed_amount','idempotency_key'],
+        'payment_receipts'=>['public_id','receipt_number','transaction_id','snapshot','issued_at'],
+    ];
+    foreach ($columns as $table=>$required) foreach ($required as $column) {
+        if (Schema::hasTable($table) && ! Schema::hasColumn($table,$column)) $errors[]="ستون {$table}.{$column} وجود ندارد.";
+    }
+    foreach (['payments.view','payments.create','payments.refund','payments.void','cash_register.view','cash_register.manage','finance.reports.view'] as $permission) {
+        if (! DB::table('permissions')->where('slug',$permission)->where('is_active',true)->exists()) $errors[]="مجوز {$permission} ثبت نشده است.";
+    }
+    if (! DB::table('roles')->where('slug','finance')->where('scope','centre')->where('is_active',true)->exists()) $errors[]='نقش مسئول مالی ثبت نشده است.';
+    foreach (['finance.cashier.index','finance.cash-register.open','finance.cash-register.close','finance.payments.store','finance.transactions.refund','finance.transactions.void','finance.receipts.show'] as $route) {
+        if (! \Illuminate\Support\Facades\Route::has($route)) $errors[]="مسیر {$route} وجود ندارد.";
+    }
+    foreach (['app/Services/PaymentLedgerService.php','app/Http/Controllers/FinanceController.php','app/Models/PaymentTransaction.php','resources/views/finance/cashier.blade.php','resources/views/finance/receipt.blade.php','public/css/stage09-finance.css'] as $file) {
+        if (! file_exists(base_path($file))) $errors[]="فایل {$file} وجود ندارد.";
+    }
+    $managerCount=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','manager')->whereIn('p.slug',['payments.view','payments.create','payments.refund','payments.void','cash_register.manage'])->distinct()->count('p.slug');
+    if ($managerCount!==5) $errors[]='مجوزهای مالی مدیر کامل نیست.';
+    $secretarySensitive=DB::table('permission_role as pr')->join('roles as r','r.id','=','pr.role_id')->join('permissions as p','p.id','=','pr.permission_id')
+        ->where('r.slug','secretary')->whereIn('p.slug',['payments.refund','payments.void','finance.reports.view'])->count();
+    if ($secretarySensitive!==0) $errors[]='منشی نباید مجوز برگشت، ابطال یا گزارش مالی داشته باشد.';
+    if (Schema::hasTable('payment_transactions')) {
+        $mismatch=DB::table('appointments as a')->leftJoinSub(
+            DB::table('payment_transactions')->selectRaw('appointment_id, COALESCE(SUM(signed_amount),0) ledger_paid')->where('status','posted')->groupBy('appointment_id'),
+            'p','p.appointment_id','=','a.id')->whereRaw('a.paid_amount <> COALESCE(p.ledger_paid,0)')->count();
+        if ($mismatch) $errors[]="{$mismatch} نوبت با دفتر تراکنش ناسازگار است.";
+    }
+    if ($errors) { foreach($errors as $error) $this->error($error); return 1; }
+    $this->info('VERIFY_STAGE09_COMPLETE_OK'); return 0;
+})->purpose('Verify Ensha Stage 09 payment ledger, receipts and daily cash register / v0.21.0');

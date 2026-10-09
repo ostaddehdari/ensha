@@ -50,7 +50,7 @@ class Role extends Model
         return $query
             ->where('scope', 'centre')
             ->where(function (Builder $builder) use ($permissionIds) {
-                $builder->whereIn('slug', ['secretary', 'counselor', 'test_manager', 'client'])
+                $builder->whereIn('slug', ['secretary', 'finance', 'counselor', 'test_manager', 'client'])
                     ->orWhere(function (Builder $custom) use ($permissionIds) {
                         $custom->where('is_system', false)
                             ->whereDoesntHave('permissions', function (Builder $permission) use ($permissionIds) {

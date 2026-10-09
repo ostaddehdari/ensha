@@ -53,6 +53,12 @@ class DashboardController extends Controller
                 ['label' => 'شعب فعال', 'value' => CentreBranch::where('centre_id', $user->centre_id)->where('is_active', true)->count(), 'icon' => 'ki-filled ki-geolocation', 'tone' => 'amber'],
                 ['label' => 'مشاور فعال', 'value' => $activeUsersAtCentre('counselor'), 'icon' => 'ki-filled ki-security-user', 'tone' => 'violet'],
             ],
+            'finance' => [
+                ['label' => 'صندوق و دریافت‌ها', 'value' => 'فعال', 'icon' => 'ki-filled ki-wallet', 'tone' => 'blue'],
+                ['label' => 'مرکز', 'value' => $user->centre?->name ?? '—', 'icon' => 'ki-filled ki-geolocation', 'tone' => 'emerald'],
+                ['label' => 'مراجعین فعال', 'value' => $activeUsersAtCentre('client'), 'icon' => 'ki-filled ki-people', 'tone' => 'amber'],
+                ['label' => 'مشاور فعال', 'value' => $activeUsersAtCentre('counselor'), 'icon' => 'ki-filled ki-security-user', 'tone' => 'violet'],
+            ],
             'counselor' => [
                 ['label' => 'نوبت‌های امروز', 'value' => '—', 'icon' => 'ki-filled ki-calendar-tick', 'tone' => 'blue'],
                 ['label' => 'مراجعین من', 'value' => '—', 'icon' => 'ki-filled ki-people', 'tone' => 'emerald'],
