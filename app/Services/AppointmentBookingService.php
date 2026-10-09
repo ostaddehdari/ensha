@@ -7,7 +7,6 @@ use App\Models\AppointmentSlot;
 use App\Models\AppointmentStatusHistory;
 use App\Models\CounsellingCase;
 use App\Models\ServiceTariff;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -15,8 +14,8 @@ class AppointmentBookingService
 {
     public function book(int $slotId, int $clientId, ?int $caseId, int $actorId, ?string $notes = null, array $options = []): Appointment
     {
-        $store = Cache::store(config('appointments.lock_store', 'redis'));
-        return $store->lock('ensha:appointment-slot:'.$slotId, 15)->block(5, function () use ($slotId, $clientId, $caseId, $actorId, $notes, $options) {
+        $initial = AppointmentSlot::with('topic')->findOrFail($slotId);
+        $operation = function () use ($slotId, $clientId, $caseId, $actorId, $notes, $options) {
             return DB::transaction(function () use ($slotId, $clientId, $caseId, $actorId, $notes, $options) {
                 $slot = AppointmentSlot::query()->lockForUpdate()->findOrFail($slotId);
                 DB::table('users')->where('id', $slot->counselor_id)->lockForUpdate()->first();
@@ -26,13 +25,6 @@ class AppointmentBookingService
                     throw ValidationException::withMessages(['slot_id' => 'این زمان دیگر قابل رزرو نیست.']);
                 }
                 app(AppointmentAvailabilityService::class)->assertBookable($slot, $clientId, null, ($options['source'] ?? '') === 'secretary');
-                $duplicate = Appointment::where('client_id', $clientId)->whereNotIn('status', ['cancelled'])
-                    ->where('starts_at', '<', $slot->ends_at)->where('ends_at', '>', $slot->starts_at)->exists();
-                if ($duplicate) throw ValidationException::withMessages(['client_id' => 'مراجع در این بازه نوبت دیگری دارد.']);
-                $counselorBusy = Appointment::where('counselor_id', $slot->counselor_id)->whereNotIn('status', ['cancelled'])
-                    ->where('slot_id', '!=', $slot->id)
-                    ->where('starts_at', '<', $slot->ends_at)->where('ends_at', '>', $slot->starts_at)->exists();
-                if ($counselorBusy) throw ValidationException::withMessages(['slot_id' => 'مشاور در این بازه نوبت فعال دیگری دارد.']);
 
                 $tariff = $this->tariff($slot);
                 // Stage 09: money is posted only through the immutable payment ledger.
@@ -74,7 +66,18 @@ class AppointmentBookingService
                 AppointmentStatusHistory::create(['appointment_id' => $appointment->id, 'from_status' => null, 'to_status' => 'pending', 'changed_by' => $actorId, 'reason' => 'ایجاد نوبت', 'changed_at' => now()]);
                 return $appointment;
             }, 3);
-        });
+        };
+
+        if (($options['_resource_locks_held'] ?? false) === true) return $operation();
+
+        $keys = app(AppointmentResourceLockService::class)->keys(
+            (int) $initial->centre_id,
+            [(int) $initial->counselor_id],
+            [(int) $initial->id],
+            (bool) $initial->room_id,
+        );
+
+        return app(AppointmentResourceLockService::class)->block($keys, $operation);
     }
 
     public function transition(Appointment $appointment, string $status, int $actorId, ?string $reason = null): Appointment

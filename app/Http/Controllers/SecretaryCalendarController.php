@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AppointmentBookingService;
 use App\Services\AppointmentAvailabilityService;
 use App\Services\AppointmentPricingService;
+use App\Services\AppointmentResourceLockService;
 use App\Services\AppointmentRescheduleService;
 use App\Services\BookingPolicy;
 use Illuminate\Http\Request;
@@ -89,7 +90,12 @@ class SecretaryCalendarController extends Controller
         return response()->json($pricing->quote($slot,$data['discount_id']??null,0));
     }
 
-    public function store(Request $request, AppointmentBookingService $booking)
+    public function store(
+        Request $request,
+        AppointmentBookingService $booking,
+        AppointmentAvailabilityService $availability,
+        AppointmentResourceLockService $resourceLocks,
+    )
     {
         abort_unless($request->user()->hasPermission('appointments.manage'), 403);
         $data = $request->validate([
@@ -120,13 +126,22 @@ class SecretaryCalendarController extends Controller
         if ($start->isPast() && ! $policy->allow_past_bookings) {
             throw ValidationException::withMessages(['start_time' => 'ثبت نوبت در گذشته برای این مرکز غیرفعال است.']);
         }
-        // One lock per counselor serializes manual bookings, including overlapping starts.
         try {
-            $appointment = \Illuminate\Support\Facades\Cache::store(config('appointments.lock_store', 'redis'))
-                ->lock('ensha:manual-counselor:'.$data['counselor_id'], 30)->block(8, function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end, $policy) {
-                    return DB::transaction(function () use ($data, $booking, $request, $centreId, $client, $topic, $start, $end, $policy) {
+            $usesRooms = $policy->check_rooms && $data['mode'] === 'in_person' && $topic->requires_room;
+            $keys = $resourceLocks->keys($centreId, [(int) $data['counselor_id']], [], $usesRooms);
+            $appointment = $resourceLocks->block($keys, function () use (
+                $data, $booking, $availability, $request, $centreId, $client, $topic, $start, $end, $usesRooms,
+            ) {
+                    return DB::transaction(function () use (
+                        $data, $booking, $availability, $request, $centreId, $client, $topic, $start, $end, $usesRooms,
+                    ) {
+                        DB::table('users')->where('id', $data['counselor_id'])->lockForUpdate()->first();
+                        if ($usesRooms) {
+                            DB::table('centre_rooms')->where('centre_id', $centreId)->orderBy('id')->lockForUpdate()->get();
+                        }
                         $client ??= $this->createClientForBooking($data, $request, $centreId);
-                        $existing = AppointmentSlot::where('counselor_id', $data['counselor_id'])
+                        $existing = AppointmentSlot::where('centre_id', $centreId)
+                            ->where('counselor_id', $data['counselor_id'])
                             ->where('topic_id', $topic->id)->where('starts_at', $start)
                             ->where('mode', $data['mode'])->lockForUpdate()->first();
                         if ($existing) {
@@ -135,33 +150,28 @@ class SecretaryCalendarController extends Controller
                             }
                             $slot = $existing;
                         } else {
-                            $roomId = null;
-                            if ($policy->check_rooms && $data['mode'] === 'in_person' && $topic->requires_room) {
-                                $roomIds = DB::table('centre_rooms')->where('centre_id', $centreId)->where('is_active', true)->pluck('id');
-                                foreach ($roomIds as $candidate) {
-                                    if (! Appointment::where('room_id', $candidate)->whereNotIn('status', ['cancelled','no_show'])
-                                        ->where('starts_at', '<', $end)->where('ends_at', '>', $start)->exists()) {
-                                        $roomId = $candidate; break;
-                                    }
-                                }
-                                if (! $roomId) throw ValidationException::withMessages(['start_time' => 'اتاق آزادی برای این زمان وجود ندارد.']);
-                            }
-                            $slot = AppointmentSlot::create([
+                            $slot = new AppointmentSlot([
                                 'centre_id' => $centreId, 'topic_id' => $topic->id, 'counselor_id' => $data['counselor_id'],
-                                'room_id' => $roomId, 'slot_date' => $start->toDateString(), 'starts_at' => $start,
-                                'ends_at' => $end, 'mode' => $data['mode'], 'capacity' => 1, 'booked_count' => 0,
+                                'room_id' => null, 'slot_date' => $start->toDateString(), 'starts_at' => $start,
+                                'ends_at' => $end, 'mode' => $data['mode'], 'capacity' => max(1, (int) $topic->capacity), 'booked_count' => 0,
                                 'status' => 'available', 'source' => 'secretary_manual',
                             ]);
+                            $slot->setRelation('topic', $topic);
+                            if ($usesRooms) $slot->room_id = $availability->assignAvailableRoom($slot);
+                            $availability->assertBookable($slot, $client->id, null, true);
+                            $slot->save();
                         }
                         return $booking->book($slot->id, $client->id, $data['case_id'] ?? null, $request->user()->id,
-                            $data['notes'] ?? null, ['source' => 'secretary', 'discount_id' => $data['discount_id'] ?? null]);
+                            $data['notes'] ?? null, [
+                                'source' => 'secretary',
+                                'discount_id' => $data['discount_id'] ?? null,
+                                '_resource_locks_held' => true,
+                            ]);
                     });
                 });
             return response()->json($this->event($appointment->load(['client.user', 'topic', 'counselor', 'slot.room'])), 201);
         } catch (ValidationException $e) {
             return response()->json(['message' => $e->getMessage(), 'errors' => $e->errors()], 409);
-        } catch (\Illuminate\Contracts\Cache\LockTimeoutException $e) {
-            return response()->json(['message' => 'ثبت نوبت هم‌زمان در جریان است؛ دوباره تلاش کنید.'], 409);
         }
     }
 
@@ -208,58 +218,9 @@ class SecretaryCalendarController extends Controller
             $centreId=(int) $appointment->centre_id;
             abort_unless($this->counselors($centreId)->contains('id',(int) $data['counselor_id']),403);
             $start=Carbon::parse($data['start']); $end=Carbon::parse($data['end']);
-            $policy=BookingPolicy::forCentre($centreId);
-            if ($start->isPast() && ! $policy->allow_past_bookings) throw ValidationException::withMessages(['start'=>'انتقال نوبت به زمان گذشته غیرفعال است.']);
-            $updated=DB::transaction(function () use ($appointment,$data,$start,$end,$policy,$centreId,$request) {
-                $currentSlot = AppointmentSlot::whereKey($appointment->slot_id)->lockForUpdate()->firstOrFail();
-                $sameSlot = (int) $currentSlot->counselor_id === (int) $data['counselor_id']
-                    && (int) $currentSlot->topic_id === (int) $appointment->topic_id
-                    && $currentSlot->mode === $appointment->mode
-                    && $currentSlot->starts_at->equalTo($start);
-
-                // DayPilot resize keeps the same slot and only changes its end.
-                // Do not create a second slot with the same unique key.
-                if ($sameSlot) {
-                    $overlap = Appointment::where('counselor_id', $data['counselor_id'])
-                        ->where('id', '!=', $appointment->id)
-                        ->whereNotIn('status', ['cancelled', 'no_show'])
-                        ->where('starts_at', '<', $end)->where('ends_at', '>', $start)
-                        ->exists();
-                    if ($overlap) {
-                        throw ValidationException::withMessages(['end' => 'طول جدید با نوبت دیگری تداخل دارد.']);
-                    }
-                    $currentSlot->update([
-                        'slot_date' => $start->toDateString(),
-                        'ends_at' => $end,
-                        'lock_version' => $currentSlot->lock_version + 1,
-                    ]);
-                    $appointment->update([
-                        'starts_at' => $start,
-                        'ends_at' => $end,
-                        'duration_minutes' => $start->diffInMinutes($end),
-                        'updated_by' => $request->user()->id,
-                    ]);
-                    return $appointment->fresh();
-                }
-
-                $target=AppointmentSlot::where('centre_id',$centreId)->where('counselor_id',$data['counselor_id'])
-                    ->where('topic_id',$appointment->topic_id)->where('starts_at',$start)->where('mode',$appointment->mode)
-                    ->where('id','!=',$appointment->slot_id)->lockForUpdate()->first();
-                if ($target && (! $target->ends_at->equalTo($end) || $target->status!=='available')) throw ValidationException::withMessages(['start'=>'زمان مقصد قبلاً اشغال شده است.']);
-                if (! $target) {
-                    $roomId=null;
-                    if ($policy->check_rooms && $appointment->mode==='in_person' && $appointment->topic?->requires_room) {
-                        foreach (DB::table('centre_rooms')->where('centre_id',$centreId)->where('is_active',true)->pluck('id') as $candidate) {
-                            if (! Appointment::where('room_id',$candidate)->where('id','!=',$appointment->id)->whereNotIn('status',['cancelled','no_show'])->where('starts_at','<',$end)->where('ends_at','>',$start)->exists()) { $roomId=$candidate; break; }
-                        }
-                        if (! $roomId) throw ValidationException::withMessages(['start'=>'اتاق آزادی برای زمان مقصد وجود ندارد.']);
-                    }
-                    $target=AppointmentSlot::create(['centre_id'=>$centreId,'branch_id'=>$appointment->branch_id,'topic_id'=>$appointment->topic_id,
-                        'counselor_id'=>$data['counselor_id'],'room_id'=>$roomId,'slot_date'=>$start->toDateString(),'starts_at'=>$start,'ends_at'=>$end,
-                        'mode'=>$appointment->mode,'capacity'=>1,'booked_count'=>0,'status'=>'available','source'=>'secretary_manual']);
-                }
-                return app(AppointmentRescheduleService::class)->move($appointment,$target,$request->user()->id,true);
-            });
+            $updated = app(AppointmentRescheduleService::class)->moveToRange(
+                $appointment, (int) $data['counselor_id'], $start, $end, $request->user()->id, true,
+            );
             return response()->json($this->event($updated->load(['client.user', 'topic', 'counselor', 'slot.room'])));
         } catch (ValidationException $e) { return response()->json(['message' => 'تداخل زمان', 'errors' => $e->errors()], 409); }
     }
