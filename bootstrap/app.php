@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\TrackUserSession;
+use App\Http\Middleware\VerifyWordPressBridgeRequest;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'password.changed' => EnsurePasswordIsChanged::class,
+            'wordpress.bridge' => VerifyWordPressBridgeRequest::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
